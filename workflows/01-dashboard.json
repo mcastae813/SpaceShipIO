@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:26:17.637Z",
+  "updatedAt": "2026-05-27T04:52:41.242Z",
   "createdAt": "2026-05-27T00:27:10.245Z",
   "id": "JJGobcDaThtvKdOj",
   "name": "ST-01 Dashboard",
@@ -102,7 +102,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const agent = $('Get Agent').first().json.data;\nconst ships = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst text = `\\U0001F680 <b>HERMES-FLEET Dashboard</b>\\n\\U0001F4B0 Credits: ${(agent.credits||0).toLocaleString()}\\n\\U0001F6A2 Ships: ${ships.length}\\n\\U0001F4CB Active contracts: ${active}\\n\\U0001F4CD HQ: ${agent.headquarters}`;\nreturn [{json:{text}}];"
+        "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst agent     = $('Get Agent').first().json.data;\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\n\nconst credits = agent.credits || 0;\nconst lastCredits = staticData.lastCredits;\n\n// Only send if credits changed (or first ever run)\nif (lastCredits !== undefined && lastCredits === credits) {\n  return [];\n}\nstaticData.lastCredits = credits;\n\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst diff   = lastCredits !== undefined ? credits - lastCredits : null;\nconst diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString()})` : ` (${diff.toLocaleString()})`) : '';\n\nconst text = `\ud83d\ude80 <b>HERMES-FLEET Dashboard</b>\n\ud83d\udcb0 Credits: ${credits.toLocaleString()}${diffStr}\n\ud83d\udea2 Ships: ${ships.length}\n\ud83d\udccb Active contracts: ${active}\n\ud83d\udccd HQ: ${agent.headquarters}`;\n\nreturn [{json: {text}}];\n"
       },
       "id": "838234df",
       "name": "Format",
@@ -200,9 +200,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "5f9348d6-86c7-420f-9d24-047c0eb9c128",
-  "activeVersionId": "5f9348d6-86c7-420f-9d24-047c0eb9c128",
-  "versionCounter": 20,
+  "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
+  "activeVersionId": "53e45989-7360-4da6-a208-ea44a798c18b",
+  "versionCounter": 25,
   "triggerCount": 1,
   "shared": [
     {
@@ -225,9 +225,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:26:17.639Z",
-    "createdAt": "2026-05-27T04:26:17.639Z",
-    "versionId": "5f9348d6-86c7-420f-9d24-047c0eb9c128",
+    "updatedAt": "2026-05-27T04:52:41.243Z",
+    "createdAt": "2026-05-27T04:52:41.243Z",
+    "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
     "workflowId": "JJGobcDaThtvKdOj",
     "nodes": [
       {
@@ -325,7 +325,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const agent = $('Get Agent').first().json.data;\nconst ships = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst text = `\\U0001F680 <b>HERMES-FLEET Dashboard</b>\\n\\U0001F4B0 Credits: ${(agent.credits||0).toLocaleString()}\\n\\U0001F6A2 Ships: ${ships.length}\\n\\U0001F4CB Active contracts: ${active}\\n\\U0001F4CD HQ: ${agent.headquarters}`;\nreturn [{json:{text}}];"
+          "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst agent     = $('Get Agent').first().json.data;\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\n\nconst credits = agent.credits || 0;\nconst lastCredits = staticData.lastCredits;\n\n// Only send if credits changed (or first ever run)\nif (lastCredits !== undefined && lastCredits === credits) {\n  return [];\n}\nstaticData.lastCredits = credits;\n\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst diff   = lastCredits !== undefined ? credits - lastCredits : null;\nconst diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString()})` : ` (${diff.toLocaleString()})`) : '';\n\nconst text = `\ud83d\ude80 <b>HERMES-FLEET Dashboard</b>\n\ud83d\udcb0 Credits: ${credits.toLocaleString()}${diffStr}\n\ud83d\udea2 Ships: ${ships.length}\n\ud83d\udccb Active contracts: ${active}\n\ud83d\udccd HQ: ${agent.headquarters}`;\n\nreturn [{json: {text}}];\n"
         },
         "id": "838234df",
         "name": "Format",
@@ -418,10 +418,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:26:17.733Z",
-        "id": 85,
+        "createdAt": "2026-05-27T04:52:41.319Z",
+        "id": 106,
         "workflowId": "JJGobcDaThtvKdOj",
-        "versionId": "5f9348d6-86c7-420f-9d24-047c0eb9c128",
+        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
