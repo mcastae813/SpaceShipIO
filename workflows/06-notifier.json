@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:26:18.151Z",
+  "updatedAt": "2026-05-27T04:28:47.582Z",
   "createdAt": "2026-05-27T00:27:09.870Z",
   "id": "6Bf5ZCnuBJEJUfYb",
   "name": "ST-06 Notifier",
@@ -31,19 +31,19 @@
             {
               "id": "a3b96780",
               "name": "title",
-              "value": "={{ $json.title    ?? 'SpaceShipIO Alert' }}",
+              "value": "={{ $json.body?.title    ?? $json.title    ?? 'SpaceShipIO Alert' }}",
               "type": "string"
             },
             {
               "id": "660d1231",
               "name": "message",
-              "value": "={{ $json.message  ?? '(no message)' }}",
+              "value": "={{ $json.body?.message  ?? $json.message  ?? '(no message)' }}",
               "type": "string"
             },
             {
               "id": "0210a8d2",
               "name": "severity",
-              "value": "={{ $json.severity ?? 'info' }}",
+              "value": "={{ $json.body?.severity ?? $json.severity ?? 'info' }}",
               "type": "string"
             }
           ]
@@ -137,9 +137,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
-  "activeVersionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
-  "versionCounter": 22,
+  "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
+  "activeVersionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
+  "versionCounter": 26,
   "triggerCount": 1,
   "shared": [
     {
@@ -162,9 +162,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:26:18.156Z",
-    "createdAt": "2026-05-27T04:26:18.156Z",
-    "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
+    "updatedAt": "2026-05-27T04:28:47.583Z",
+    "createdAt": "2026-05-27T04:28:47.583Z",
+    "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
     "workflowId": "6Bf5ZCnuBJEJUfYb",
     "nodes": [
       {
@@ -191,19 +191,19 @@
               {
                 "id": "a3b96780",
                 "name": "title",
-                "value": "={{ $json.title    ?? 'SpaceShipIO Alert' }}",
+                "value": "={{ $json.body?.title    ?? $json.title    ?? 'SpaceShipIO Alert' }}",
                 "type": "string"
               },
               {
                 "id": "660d1231",
                 "name": "message",
-                "value": "={{ $json.message  ?? '(no message)' }}",
+                "value": "={{ $json.body?.message  ?? $json.message  ?? '(no message)' }}",
                 "type": "string"
               },
               {
                 "id": "0210a8d2",
                 "name": "severity",
-                "value": "={{ $json.severity ?? 'info' }}",
+                "value": "={{ $json.body?.severity ?? $json.severity ?? 'info' }}",
                 "type": "string"
               }
             ]
@@ -297,10 +297,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:26:18.280Z",
-        "id": 87,
+        "createdAt": "2026-05-27T04:28:47.652Z",
+        "id": 91,
         "workflowId": "6Bf5ZCnuBJEJUfYb",
-        "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
+        "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
