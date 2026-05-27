@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:24:31.615Z",
+  "updatedAt": "2026-05-27T05:32:53.430Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -607,7 +607,7 @@
         "nodeCredentialType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({survey: $json.survey}) }}",
+        "jsonBody": "={{ JSON.stringify($json.survey) }}",
         "options": {}
       },
       "credentials": {
@@ -786,9 +786,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
-  "activeVersionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
-  "versionCounter": 40,
+  "versionId": "dfce1f14-8619-4ab4-ace0-3b0a761cfe5b",
+  "activeVersionId": "dfce1f14-8619-4ab4-ace0-3b0a761cfe5b",
+  "versionCounter": 46,
   "triggerCount": 1,
   "shared": [
     {
@@ -811,9 +811,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:24:31.617Z",
-    "createdAt": "2026-05-27T05:24:31.617Z",
-    "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
+    "updatedAt": "2026-05-27T05:32:53.431Z",
+    "createdAt": "2026-05-27T05:32:53.431Z",
+    "versionId": "dfce1f14-8619-4ab4-ace0-3b0a761cfe5b",
     "workflowId": "7iHITXOzRWYCAXVE",
     "nodes": [
       {
@@ -1416,7 +1416,7 @@
           "nodeCredentialType": "httpHeaderAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({survey: $json.survey}) }}",
+          "jsonBody": "={{ JSON.stringify($json.survey) }}",
           "options": {}
         },
         "credentials": {
@@ -1591,10 +1591,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:24:31.707Z",
-        "id": 112,
+        "createdAt": "2026-05-27T05:32:53.570Z",
+        "id": 114,
         "workflowId": "7iHITXOzRWYCAXVE",
-        "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
+        "versionId": "dfce1f14-8619-4ab4-ace0-3b0a761cfe5b",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
