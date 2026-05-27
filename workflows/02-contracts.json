@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:38:02.592Z",
+  "updatedAt": "2026-05-27T06:01:00.871Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
@@ -155,6 +155,19 @@
         700,
         500
       ]
+    },
+    {
+      "name": "Changed?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst d = $input.first().json;\n\nconst key = `${d.unaccepted.length}|${d.active.length}|${d.fulfilled.length}`;\nif (staticData.lastContractKey === key) return [];  // no change, stop\n\nstaticData.lastContractKey = key;\nreturn [$input.first()];  // changed \u2014 pass through\n"
+      },
+      "position": [
+        720,
+        300
+      ],
+      "id": "43060a21-859b-463b-8caf-55df937b3b2d"
     }
   ],
   "connections": {
@@ -184,17 +197,7 @@
       "main": [
         [
           {
-            "node": "Extract Unaccepted",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Extract Fulfilled",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Notify Summary",
+            "node": "Changed?",
             "type": "main",
             "index": 0
           }
@@ -222,6 +225,27 @@
           }
         ]
       ]
+    },
+    "Changed?": {
+      "main": [
+        [
+          {
+            "node": "Extract Unaccepted",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Fulfilled",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -234,9 +258,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
-  "activeVersionId": "95d98e58-ed5c-4a24-9600-efa015263012",
-  "versionCounter": 28,
+  "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+  "activeVersionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+  "versionCounter": 34,
   "triggerCount": 1,
   "shared": [
     {
@@ -259,9 +283,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:38:02.593Z",
-    "createdAt": "2026-05-27T04:38:02.593Z",
-    "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
+    "updatedAt": "2026-05-27T06:01:00.873Z",
+    "createdAt": "2026-05-27T06:01:00.873Z",
+    "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
     "workflowId": "l4FhC5LIhNxLpeHJ",
     "nodes": [
       {
@@ -412,6 +436,19 @@
           700,
           500
         ]
+      },
+      {
+        "name": "Changed?",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "parameters": {
+          "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst d = $input.first().json;\n\nconst key = `${d.unaccepted.length}|${d.active.length}|${d.fulfilled.length}`;\nif (staticData.lastContractKey === key) return [];  // no change, stop\n\nstaticData.lastContractKey = key;\nreturn [$input.first()];  // changed \u2014 pass through\n"
+        },
+        "position": [
+          720,
+          300
+        ],
+        "id": "43060a21-859b-463b-8caf-55df937b3b2d"
       }
     ],
     "connections": {
@@ -441,17 +478,7 @@
         "main": [
           [
             {
-              "node": "Extract Unaccepted",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Extract Fulfilled",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Notify Summary",
+              "node": "Changed?",
               "type": "main",
               "index": 0
             }
@@ -479,6 +506,27 @@
             }
           ]
         ]
+      },
+      "Changed?": {
+        "main": [
+          [
+            {
+              "node": "Extract Unaccepted",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Extract Fulfilled",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Notify Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Martin Castaneda",
@@ -487,10 +535,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:38:02.651Z",
-        "id": 95,
+        "createdAt": "2026-05-27T06:01:00.970Z",
+        "id": 132,
         "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
+        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
