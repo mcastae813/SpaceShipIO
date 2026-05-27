@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:11:42.440Z",
+  "updatedAt": "2026-05-27T04:22:40.017Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
@@ -172,7 +172,7 @@
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
+        "jsonBody": "={\"title\":\"Contract Manager\",\"message\":\"{{ $json.summary }}\",\"severity\":\"info\"}",
         "options": {}
       },
       "id": "7033205e",
@@ -284,9 +284,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
-  "activeVersionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
-  "versionCounter": 13,
+  "versionId": "fb95223b-4a7d-4b3f-915f-d148cb2a8646",
+  "activeVersionId": "fb95223b-4a7d-4b3f-915f-d148cb2a8646",
+  "versionCounter": 18,
   "triggerCount": 1,
   "shared": [
     {
@@ -309,9 +309,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:11:42.443Z",
-    "createdAt": "2026-05-27T04:11:42.443Z",
-    "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+    "updatedAt": "2026-05-27T04:22:40.018Z",
+    "createdAt": "2026-05-27T04:22:40.018Z",
+    "versionId": "fb95223b-4a7d-4b3f-915f-d148cb2a8646",
     "workflowId": "l4FhC5LIhNxLpeHJ",
     "nodes": [
       {
@@ -479,7 +479,7 @@
           "url": "http://localhost:5678/webhook/spaceship-notify",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
+          "jsonBody": "={\"title\":\"Contract Manager\",\"message\":\"{{ $json.summary }}\",\"severity\":\"info\"}",
           "options": {}
         },
         "id": "7033205e",
@@ -587,10 +587,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:11:42.537Z",
-        "id": 76,
+        "createdAt": "2026-05-27T04:22:40.097Z",
+        "id": 83,
         "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+        "versionId": "fb95223b-4a7d-4b3f-915f-d148cb2a8646",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }

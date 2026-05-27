@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:12:59.376Z",
+  "updatedAt": "2026-05-27T04:22:39.019Z",
   "createdAt": "2026-05-27T00:27:10.245Z",
   "id": "JJGobcDaThtvKdOj",
   "name": "ST-01 Dashboard",
@@ -119,7 +119,7 @@
         "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\"chat_id\":\"7603833558\",\"text\":\"={{ $json.text }}\",\"parse_mode\":\"HTML\"}",
+        "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":\"{{ $json.text }}\",\"parse_mode\":\"HTML\"}",
         "options": {}
       },
       "id": "177b2319",
@@ -200,9 +200,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "32ebe1fb-6aa8-496a-bb7d-265114c75a41",
-  "activeVersionId": "32ebe1fb-6aa8-496a-bb7d-265114c75a41",
-  "versionCounter": 10,
+  "versionId": "a301e8c7-d95b-45d4-a76c-7dcb806d29ac",
+  "activeVersionId": "a301e8c7-d95b-45d4-a76c-7dcb806d29ac",
+  "versionCounter": 15,
   "triggerCount": 1,
   "shared": [
     {
@@ -225,9 +225,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:12:59.377Z",
-    "createdAt": "2026-05-27T04:12:59.377Z",
-    "versionId": "32ebe1fb-6aa8-496a-bb7d-265114c75a41",
+    "updatedAt": "2026-05-27T04:22:39.020Z",
+    "createdAt": "2026-05-27T04:22:39.020Z",
+    "versionId": "a301e8c7-d95b-45d4-a76c-7dcb806d29ac",
     "workflowId": "JJGobcDaThtvKdOj",
     "nodes": [
       {
@@ -342,7 +342,7 @@
           "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "{\"chat_id\":\"7603833558\",\"text\":\"={{ $json.text }}\",\"parse_mode\":\"HTML\"}",
+          "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":\"{{ $json.text }}\",\"parse_mode\":\"HTML\"}",
           "options": {}
         },
         "id": "177b2319",
@@ -418,10 +418,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:12:59.476Z",
-        "id": 77,
+        "createdAt": "2026-05-27T04:22:39.597Z",
+        "id": 79,
         "workflowId": "JJGobcDaThtvKdOj",
-        "versionId": "32ebe1fb-6aa8-496a-bb7d-265114c75a41",
+        "versionId": "a301e8c7-d95b-45d4-a76c-7dcb806d29ac",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
