@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T07:01:05.468Z",
+  "updatedAt": "2026-05-27T07:13:33.823Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -12,8 +12,8 @@
         "rule": {
           "interval": [
             {
-              "field": "minutes",
-              "minutesInterval": 1
+              "field": "seconds",
+              "secondsInterval": 30
             }
           ]
         }
@@ -896,9 +896,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "935c4e4c-2212-442e-95bd-fc4f0007b48c",
-  "activeVersionId": "935c4e4c-2212-442e-95bd-fc4f0007b48c",
-  "versionCounter": 58,
+  "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
+  "activeVersionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
+  "versionCounter": 63,
   "triggerCount": 1,
   "shared": [
     {
@@ -921,9 +921,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T07:01:05.470Z",
-    "createdAt": "2026-05-27T07:01:05.470Z",
-    "versionId": "935c4e4c-2212-442e-95bd-fc4f0007b48c",
+    "updatedAt": "2026-05-27T07:13:33.828Z",
+    "createdAt": "2026-05-27T07:13:33.828Z",
+    "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
     "workflowId": "7iHITXOzRWYCAXVE",
     "nodes": [
       {
@@ -931,8 +931,8 @@
           "rule": {
             "interval": [
               {
-                "field": "minutes",
-                "minutesInterval": 1
+                "field": "seconds",
+                "secondsInterval": 30
               }
             ]
           }
@@ -1811,10 +1811,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T07:01:06.885Z",
-        "id": 136,
+        "createdAt": "2026-05-27T07:13:34.033Z",
+        "id": 140,
         "workflowId": "7iHITXOzRWYCAXVE",
-        "versionId": "935c4e4c-2212-442e-95bd-fc4f0007b48c",
+        "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
