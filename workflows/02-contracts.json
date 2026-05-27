@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-05-27T00:34:27.502Z",
+  "updatedAt": "2026-05-27T04:11:42.440Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -171,8 +171,8 @@
         "method": "POST",
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
-        "contentType": "json",
-        "body": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
         "options": {}
       },
       "id": "7033205e",
@@ -277,13 +277,17 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
+  "staticData": {
+    "node:Every 5 min": {
+      "recurrenceRules": []
+    }
+  },
   "meta": null,
   "pinData": null,
-  "versionId": "a8fdbfb1-a77c-4628-a9a3-f091a733df4d",
-  "activeVersionId": null,
-  "versionCounter": 1,
-  "triggerCount": 0,
+  "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+  "activeVersionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+  "versionCounter": 13,
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-05-27T00:34:27.504Z",
@@ -304,5 +308,292 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-05-27T04:11:42.443Z",
+    "createdAt": "2026-05-27T04:11:42.443Z",
+    "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+    "workflowId": "l4FhC5LIhNxLpeHJ",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 5
+              }
+            ]
+          }
+        },
+        "id": "3d2427ef",
+        "name": "Every 5 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          100,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://api.spacetraders.io/v2/my/contracts",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "options": {},
+          "alwaysOutputData": true
+        },
+        "id": "a1041a95",
+        "name": "List Contracts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          300,
+          300
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst raw = $input.first().json.data || [];\nconst all = Array.isArray(raw) ? raw : [];\nconst unaccepted = all.filter(c => !c.accepted);\nconst fulfilled = all.filter(c => c.accepted && !c.fulfilled && c.terms?.deliver?.every(d => d.unitsFulfilled >= d.unitsRequired));\nconst active = all.filter(c => c.accepted && !c.fulfilled);\nreturn [{json: {unaccepted, fulfilled, active,\n  summary: `Unaccepted: ${unaccepted.length}, Ready to fulfill: ${fulfilled.length}, Active: ${active.length}`}}];\n"
+        },
+        "id": "1ecc4279",
+        "name": "Categorize",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          500,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "batchSize": 1,
+          "options": {}
+        },
+        "id": "7206a0fa",
+        "name": "Each Unaccepted",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          700,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
+        },
+        "id": "b82c8e25",
+        "name": "Set Accept ID",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "continueOnFail": true,
+          "options": {}
+        },
+        "id": "5ac6d677",
+        "name": "Accept Contract",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          200
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "batchSize": 1,
+          "options": {}
+        },
+        "id": "197360aa",
+        "name": "Each Fulfilled",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          700,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
+        },
+        "id": "94f866cc",
+        "name": "Set Fulfill ID",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/fulfill",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "continueOnFail": true,
+          "options": {}
+        },
+        "id": "ff65ffb6",
+        "name": "Fulfill Contract",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          400
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
+          "options": {}
+        },
+        "id": "7033205e",
+        "name": "Notify Summary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          700,
+          550
+        ]
+      }
+    ],
+    "connections": {
+      "Every 5 min": {
+        "main": [
+          [
+            {
+              "node": "List Contracts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List Contracts": {
+        "main": [
+          [
+            {
+              "node": "Categorize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Categorize": {
+        "main": [
+          [
+            {
+              "node": "Each Unaccepted",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Each Fulfilled",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Notify Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Each Unaccepted": {
+        "main": [
+          [
+            {
+              "node": "Set Accept ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Accept ID": {
+        "main": [
+          [
+            {
+              "node": "Accept Contract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Each Fulfilled": {
+        "main": [
+          [
+            {
+              "node": "Set Fulfill ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Fulfill ID": {
+        "main": [
+          [
+            {
+              "node": "Fulfill Contract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Martin Castaneda",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-27T04:11:42.537Z",
+        "id": 76,
+        "workflowId": "l4FhC5LIhNxLpeHJ",
+        "versionId": "3e20077d-1057-417e-ad32-b7ec395942fd",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      }
+    ]
+  }
 }
