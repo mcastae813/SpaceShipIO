@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:22:39.775Z",
+  "updatedAt": "2026-05-27T04:26:18.151Z",
   "createdAt": "2026-05-27T00:27:09.870Z",
   "id": "6Bf5ZCnuBJEJUfYb",
   "name": "ST-06 Notifier",
@@ -78,7 +78,7 @@
         "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":\"{{ $json.text }}\",\"parse_mode\":\"HTML\"}",
+        "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":{{ JSON.stringify($json.text) }},\"parse_mode\":\"HTML\"}",
         "options": {}
       },
       "id": "427d2708",
@@ -137,9 +137,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "f3392220-980f-49c8-980f-6198d38721de",
-  "activeVersionId": "f3392220-980f-49c8-980f-6198d38721de",
-  "versionCounter": 18,
+  "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
+  "activeVersionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
+  "versionCounter": 22,
   "triggerCount": 1,
   "shared": [
     {
@@ -162,9 +162,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:22:39.776Z",
-    "createdAt": "2026-05-27T04:22:39.776Z",
-    "versionId": "f3392220-980f-49c8-980f-6198d38721de",
+    "updatedAt": "2026-05-27T04:26:18.156Z",
+    "createdAt": "2026-05-27T04:26:18.156Z",
+    "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
     "workflowId": "6Bf5ZCnuBJEJUfYb",
     "nodes": [
       {
@@ -238,7 +238,7 @@
           "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":\"{{ $json.text }}\",\"parse_mode\":\"HTML\"}",
+          "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":{{ JSON.stringify($json.text) }},\"parse_mode\":\"HTML\"}",
           "options": {}
         },
         "id": "427d2708",
@@ -297,10 +297,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:22:39.853Z",
-        "id": 81,
+        "createdAt": "2026-05-27T04:26:18.280Z",
+        "id": 87,
         "workflowId": "6Bf5ZCnuBJEJUfYb",
-        "versionId": "f3392220-980f-49c8-980f-6198d38721de",
+        "versionId": "24b361a6-f2b8-4806-8ae3-0826d14cc567",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
