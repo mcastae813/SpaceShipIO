@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T07:18:58.458Z",
+  "updatedAt": "2026-05-27T19:35:46.469Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
@@ -168,6 +168,85 @@
         300
       ],
       "id": "43060a21-859b-463b-8caf-55df937b3b2d"
+    },
+    {
+      "name": "Negotiate Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        520
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n// Only negotiate when there is nothing to accept or actively work on\nif (d.unaccepted.length === 0 && d.active.length === 0) {\n  return [{json: {negotiate: true}}];\n}\nreturn [];\n"
+      },
+      "id": "f4c13da2-b31d-4e39-99cb-84b4b3e064a6"
+    },
+    {
+      "name": "Negotiate Contract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        640
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.spacetraders.io/v2/my/ships/HERMES-FLEET2-2/negotiate/contract",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {},
+        "alwaysOutputData": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      },
+      "id": "0cf1dd61-766b-42f8-b39f-461ef96b1121"
+    },
+    {
+      "name": "Accept Negotiated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        950,
+        640
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{ $input.first().json.data.contract.id }}/accept",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {},
+        "alwaysOutputData": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      },
+      "id": "064bc347-373e-4d3f-858e-0daec49151e6"
+    },
+    {
+      "name": "Notify Negotiated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        640
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\"title\":\"New Contract Accepted\",\"message\":\"Negotiated + accepted new contract via HERMES-FLEET2-2. Trade: {{ $input.first().json.data.contract.terms.deliver[0].tradeSymbol }} x{{ $input.first().json.data.contract.terms.deliver[0].unitsRequired }}\",\"severity\":\"info\"}",
+        "options": {}
+      },
+      "id": "992af97c-318d-4424-bd84-b28a36426a8c"
     }
   ],
   "connections": {
@@ -198,6 +277,11 @@
         [
           {
             "node": "Changed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Negotiate Check",
             "type": "main",
             "index": 0
           }
@@ -246,6 +330,39 @@
           }
         ]
       ]
+    },
+    "Negotiate Check": {
+      "main": [
+        [
+          {
+            "node": "Negotiate Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Negotiate Contract": {
+      "main": [
+        [
+          {
+            "node": "Accept Negotiated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept Negotiated": {
+      "main": [
+        [
+          {
+            "node": "Notify Negotiated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -259,9 +376,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
-  "activeVersionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
-  "versionCounter": 40,
+  "versionId": "488ecede-55e2-484b-8cf4-fc683ad01d24",
+  "activeVersionId": "488ecede-55e2-484b-8cf4-fc683ad01d24",
+  "versionCounter": 48,
   "triggerCount": 1,
   "shared": [
     {
@@ -284,9 +401,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T06:01:00.873Z",
-    "createdAt": "2026-05-27T06:01:00.873Z",
-    "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+    "updatedAt": "2026-05-27T19:35:46.470Z",
+    "createdAt": "2026-05-27T19:35:46.470Z",
+    "versionId": "488ecede-55e2-484b-8cf4-fc683ad01d24",
     "workflowId": "l4FhC5LIhNxLpeHJ",
     "nodes": [
       {
@@ -450,6 +567,85 @@
           300
         ],
         "id": "43060a21-859b-463b-8caf-55df937b3b2d"
+      },
+      {
+        "name": "Negotiate Check",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          500,
+          520
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\n// Only negotiate when there is nothing to accept or actively work on\nif (d.unaccepted.length === 0 && d.active.length === 0) {\n  return [{json: {negotiate: true}}];\n}\nreturn [];\n"
+        },
+        "id": "f4c13da2-b31d-4e39-99cb-84b4b3e064a6"
+      },
+      {
+        "name": "Negotiate Contract",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          720,
+          640
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.spacetraders.io/v2/my/ships/HERMES-FLEET2-2/negotiate/contract",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "options": {},
+          "alwaysOutputData": true
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        },
+        "id": "0cf1dd61-766b-42f8-b39f-461ef96b1121"
+      },
+      {
+        "name": "Accept Negotiated",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          950,
+          640
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/contracts/{{ $input.first().json.data.contract.id }}/accept",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "options": {},
+          "alwaysOutputData": true
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        },
+        "id": "064bc347-373e-4d3f-858e-0daec49151e6"
+      },
+      {
+        "name": "Notify Negotiated",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1180,
+          640
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "contentType": "json",
+          "body": "={\"title\":\"New Contract Accepted\",\"message\":\"Negotiated + accepted new contract via HERMES-FLEET2-2. Trade: {{ $input.first().json.data.contract.terms.deliver[0].tradeSymbol }} x{{ $input.first().json.data.contract.terms.deliver[0].unitsRequired }}\",\"severity\":\"info\"}",
+          "options": {}
+        },
+        "id": "992af97c-318d-4424-bd84-b28a36426a8c"
       }
     ],
     "connections": {
@@ -480,6 +676,11 @@
           [
             {
               "node": "Changed?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Negotiate Check",
               "type": "main",
               "index": 0
             }
@@ -528,6 +729,39 @@
             }
           ]
         ]
+      },
+      "Negotiate Check": {
+        "main": [
+          [
+            {
+              "node": "Negotiate Contract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Negotiate Contract": {
+        "main": [
+          [
+            {
+              "node": "Accept Negotiated",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Accept Negotiated": {
+        "main": [
+          [
+            {
+              "node": "Notify Negotiated",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Martin Castaneda",
@@ -536,27 +770,11 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T06:01:00.970Z",
-        "id": 132,
+        "createdAt": "2026-05-27T19:35:46.540Z",
+        "id": 180,
         "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+        "versionId": "488ecede-55e2-484b-8cf4-fc683ad01d24",
         "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:58.716Z",
-        "id": 144,
-        "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:58.159Z",
-        "id": 143,
-        "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
-        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]
