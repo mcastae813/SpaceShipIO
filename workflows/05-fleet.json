@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:38:02.394Z",
+  "updatedAt": "2026-05-27T05:43:19.129Z",
   "createdAt": "2026-05-27T00:27:10.602Z",
   "id": "Vb1VCWThIkn9nZZJ",
   "name": "ST-05 Fleet Commander",
@@ -246,6 +246,7 @@
     },
     "Each Ship": {
       "main": [
+        [],
         [
           {
             "node": "Decide",
@@ -302,9 +303,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "3b32b203-cc70-4225-8a5b-86ec4dc63798",
-  "activeVersionId": "3b32b203-cc70-4225-8a5b-86ec4dc63798",
-  "versionCounter": 11,
+  "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
+  "activeVersionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
+  "versionCounter": 17,
   "triggerCount": 1,
   "shared": [
     {
@@ -327,9 +328,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:38:02.395Z",
-    "createdAt": "2026-05-27T04:38:02.395Z",
-    "versionId": "3b32b203-cc70-4225-8a5b-86ec4dc63798",
+    "updatedAt": "2026-05-27T05:43:19.130Z",
+    "createdAt": "2026-05-27T05:43:19.130Z",
+    "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
     "workflowId": "Vb1VCWThIkn9nZZJ",
     "nodes": [
       {
@@ -571,6 +572,7 @@
       },
       "Each Ship": {
         "main": [
+          [],
           [
             {
               "node": "Decide",
@@ -623,10 +625,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:38:02.473Z",
-        "id": 93,
+        "createdAt": "2026-05-27T05:43:19.184Z",
+        "id": 120,
         "workflowId": "Vb1VCWThIkn9nZZJ",
-        "versionId": "3b32b203-cc70-4225-8a5b-86ec4dc63798",
+        "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
