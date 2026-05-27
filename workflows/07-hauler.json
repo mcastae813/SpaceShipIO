@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:08:00.933Z",
+  "updatedAt": "2026-05-27T05:14:22.881Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -500,9 +500,9 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendBody": true,
-        "contentType": "json",
-        "body": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
-        "options": {}
+        "options": {},
+        "specifyBody": "json",
+        "jsonBody": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -655,9 +655,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
-  "activeVersionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
-  "versionCounter": 30,
+  "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
+  "activeVersionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
+  "versionCounter": 35,
   "triggerCount": 1,
   "shared": [
     {
@@ -680,9 +680,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:08:00.935Z",
-    "createdAt": "2026-05-27T05:08:00.935Z",
-    "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
+    "updatedAt": "2026-05-27T05:14:22.882Z",
+    "createdAt": "2026-05-27T05:14:22.882Z",
+    "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
     "workflowId": "7iHITXOzRWYCAXVE",
     "nodes": [
       {
@@ -1178,9 +1178,9 @@
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "httpHeaderAuth",
           "sendBody": true,
-          "contentType": "json",
-          "body": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
-          "options": {}
+          "options": {},
+          "specifyBody": "json",
+          "jsonBody": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -1329,10 +1329,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:08:01.104Z",
-        "id": 108,
+        "createdAt": "2026-05-27T05:14:22.961Z",
+        "id": 110,
         "workflowId": "7iHITXOzRWYCAXVE",
-        "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
+        "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
