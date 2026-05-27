@@ -1,0 +1,231 @@
+{
+  "updatedAt": "2026-05-27T00:27:10.245Z",
+  "createdAt": "2026-05-27T00:27:10.245Z",
+  "id": "JJGobcDaThtvKdOj",
+  "name": "ST-01 Dashboard",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "5301660a",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/agent",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "ecf410f2",
+      "name": "Get Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/ships",
+        "options": {
+          "response": {}
+        },
+        "alwaysOutputData": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "cd733b58",
+      "name": "Get Ships",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        320
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/contracts",
+        "options": {
+          "response": {}
+        },
+        "alwaysOutputData": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "a7d955d7",
+      "name": "Get Contracts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        440
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const agent = $('Get Agent').first().json.data;\nconst ships = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst text = `\\U0001F680 <b>HERMES-FLEET Dashboard</b>\\n\\U0001F4B0 Credits: ${(agent.credits||0).toLocaleString()}\\n\\U0001F6A2 Ships: ${ships.length}\\n\\U0001F4CB Active contracts: ${active}\\n\\U0001F4CD HQ: ${agent.headquarters}`;\nreturn [{json:{text}}];"
+      },
+      "id": "838234df",
+      "name": "Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "{\"chat_id\": \"7603833558\", \"text\": \"={{ $json.text }}\", \"parse_mode\": \"HTML\"}",
+        "options": {}
+      },
+      "id": "177b2319",
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Every 5 min": {
+      "main": [
+        [
+          {
+            "node": "Get Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agent": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ships": {
+      "main": [
+        [
+          {
+            "node": "Get Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contracts": {
+      "main": [
+        [
+          {
+            "node": "Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "cff1a465-290e-461b-8a78-6e9118a2cb29",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-27T00:27:10.268Z",
+      "createdAt": "2026-05-27T00:27:10.268Z",
+      "role": "workflow:owner",
+      "workflowId": "JJGobcDaThtvKdOj",
+      "projectId": "pQ9yqqsBtuSGk44p",
+      "project": {
+        "updatedAt": "2026-01-15T01:26:38.562Z",
+        "createdAt": "2026-01-15T01:25:22.740Z",
+        "id": "pQ9yqqsBtuSGk44p",
+        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
