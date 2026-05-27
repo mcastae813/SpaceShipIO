@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:50:32.720Z",
+  "updatedAt": "2026-05-27T07:10:36.604Z",
   "createdAt": "2026-05-27T00:34:27.408Z",
   "id": "kG3Thml3Dku9DkYY",
   "name": "ST-03 Mining Controller",
@@ -80,7 +80,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\nif (cooldownExp > now) return [{json:{ship:s.symbol, action:'cooldown', remainMs: cooldownExp-now}}];\nif (status !== 'IN_ORBIT') return [{json:{ship:s.symbol, action:'needs_orbit'}}];\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
+        "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\n\n// Silently stop \u2014 ship is busy or not in a state we can act on\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\n\nif (status !== 'IN_ORBIT') return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
       },
       "id": "c64f7f2d",
       "name": "Decide",
@@ -179,9 +179,9 @@
         "method": "POST",
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
-        "contentType": "json",
-        "body": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}",
-        "options": {}
+        "options": {},
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}"
       },
       "id": "34a8dc87",
       "name": "Notify Cargo Full",
@@ -304,9 +304,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
-  "activeVersionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
-  "versionCounter": 17,
+  "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+  "activeVersionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+  "versionCounter": 22,
   "triggerCount": 1,
   "shared": [
     {
@@ -329,9 +329,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:50:32.721Z",
-    "createdAt": "2026-05-27T05:50:32.721Z",
-    "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
+    "updatedAt": "2026-05-27T07:10:36.624Z",
+    "createdAt": "2026-05-27T07:10:36.624Z",
+    "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
     "workflowId": "kG3Thml3Dku9DkYY",
     "nodes": [
       {
@@ -407,7 +407,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\nif (cooldownExp > now) return [{json:{ship:s.symbol, action:'cooldown', remainMs: cooldownExp-now}}];\nif (status !== 'IN_ORBIT') return [{json:{ship:s.symbol, action:'needs_orbit'}}];\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
+          "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\n\n// Silently stop \u2014 ship is busy or not in a state we can act on\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\n\nif (status !== 'IN_ORBIT') return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
         },
         "id": "c64f7f2d",
         "name": "Decide",
@@ -506,9 +506,9 @@
           "method": "POST",
           "url": "http://localhost:5678/webhook/spaceship-notify",
           "sendBody": true,
-          "contentType": "json",
-          "body": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}",
-          "options": {}
+          "options": {},
+          "specifyBody": "json",
+          "jsonBody": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}"
         },
         "id": "34a8dc87",
         "name": "Notify Cargo Full",
@@ -627,10 +627,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:50:32.782Z",
-        "id": 124,
+        "createdAt": "2026-05-27T07:10:36.943Z",
+        "id": 138,
         "workflowId": "kG3Thml3Dku9DkYY",
-        "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
+        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
