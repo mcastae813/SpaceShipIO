@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:45:53.201Z",
+  "updatedAt": "2026-05-27T05:08:00.933Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol;\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\nif (haveOre > 0 && wp === DELIVER_WP) {\n  if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n  if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n      contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n}\n\nif (haveOre > 0 && (cargoPct >= 0.8 || haveOre >= needed)) {\n  if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:DELIVER_WP, reason:'deliver'}}];\n}\n\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') {\n    if (cargoPct >= 0.9 && haveOre > 0) return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n    return [{json:{action:'mine', ship:ship.symbol}}];\n  }\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+        "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk \u2014 dump it so we can keep mining contract ore\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// MINE\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'mine', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
       },
       "id": "de0d8b3c",
       "name": "Mission Control",
@@ -224,6 +224,28 @@
                     "id": "f9e2ba61",
                     "leftValue": "={{ $json.action }}",
                     "rightValue": "refuel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "649ade90-485f-46f6-87fe-0a06322706d7",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "jettison",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -467,6 +489,32 @@
         1300,
         560
       ]
+    },
+    {
+      "name": "Jettison",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/jettison",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      },
+      "position": [
+        1460,
+        720
+      ],
+      "id": "304422d5-530e-4a73-bb94-a7f42001ca22"
     }
   ],
   "connections": {
@@ -567,7 +615,7 @@
         ],
         [
           {
-            "node": "Wait/Skip",
+            "node": "Jettison",
             "type": "main",
             "index": 0
           }
@@ -607,9 +655,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
-  "activeVersionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
-  "versionCounter": 24,
+  "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
+  "activeVersionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
+  "versionCounter": 30,
   "triggerCount": 1,
   "shared": [
     {
@@ -632,9 +680,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:45:53.202Z",
-    "createdAt": "2026-05-27T04:45:53.202Z",
-    "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+    "updatedAt": "2026-05-27T05:08:00.935Z",
+    "createdAt": "2026-05-27T05:08:00.935Z",
+    "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
     "workflowId": "7iHITXOzRWYCAXVE",
     "nodes": [
       {
@@ -707,7 +755,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol;\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\nif (haveOre > 0 && wp === DELIVER_WP) {\n  if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n  if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n      contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n}\n\nif (haveOre > 0 && (cargoPct >= 0.8 || haveOre >= needed)) {\n  if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:DELIVER_WP, reason:'deliver'}}];\n}\n\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') {\n    if (cargoPct >= 0.9 && haveOre > 0) return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n    return [{json:{action:'mine', ship:ship.symbol}}];\n  }\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+          "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk \u2014 dump it so we can keep mining contract ore\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// MINE\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'mine', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
         },
         "id": "de0d8b3c",
         "name": "Mission Control",
@@ -854,6 +902,28 @@
                       "id": "f9e2ba61",
                       "leftValue": "={{ $json.action }}",
                       "rightValue": "refuel",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "649ade90-485f-46f6-87fe-0a06322706d7",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "jettison",
                       "operator": {
                         "type": "string",
                         "operation": "equals"
@@ -1097,6 +1167,32 @@
           1300,
           560
         ]
+      },
+      {
+        "name": "Jettison",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/jettison",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendBody": true,
+          "contentType": "json",
+          "body": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        },
+        "position": [
+          1460,
+          720
+        ],
+        "id": "304422d5-530e-4a73-bb94-a7f42001ca22"
       }
     ],
     "connections": {
@@ -1197,7 +1293,7 @@
           ],
           [
             {
-              "node": "Wait/Skip",
+              "node": "Jettison",
               "type": "main",
               "index": 0
             }
@@ -1233,10 +1329,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:45:53.367Z",
-        "id": 104,
+        "createdAt": "2026-05-27T05:08:01.104Z",
+        "id": 108,
         "workflowId": "7iHITXOzRWYCAXVE",
-        "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+        "versionId": "8fece64e-6a2b-4c5a-ba00-ac69e1c3e63a",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
