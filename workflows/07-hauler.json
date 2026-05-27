@@ -1,0 +1,1245 @@
+{
+  "updatedAt": "2026-05-27T04:45:53.201Z",
+  "createdAt": "2026-05-27T04:38:03.135Z",
+  "id": "7iHITXOzRWYCAXVE",
+  "name": "ST-07 Hauler",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "d2d29210",
+      "name": "Every 2 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/ships",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
+      },
+      "id": "17390ddc",
+      "name": "Get Ships",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/contracts",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
+      },
+      "id": "836ce5b1",
+      "name": "Get Contracts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        400
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol;\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\nif (haveOre > 0 && wp === DELIVER_WP) {\n  if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n  if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n      contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n}\n\nif (haveOre > 0 && (cargoPct >= 0.8 || haveOre >= needed)) {\n  if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:DELIVER_WP, reason:'deliver'}}];\n}\n\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') {\n    if (cargoPct >= 0.9 && haveOre > 0) return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n    return [{json:{action:'mine', ship:ship.symbol}}];\n  }\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+      },
+      "id": "de0d8b3c",
+      "name": "Mission Control",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        550,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "daf259dc",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "accept_contract",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "d3e594f2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "orbit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "5a31db04",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "navigate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "d9e599f9",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "mine",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "9c38b1f2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "dock",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e8ccd8c2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "deliver",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "f9e2ba61",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "refuel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      },
+      "id": "788a159a",
+      "name": "Action Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "82b1f515",
+      "name": "Accept Contract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        60
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/orbit",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "0e856654",
+      "name": "Orbit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/navigate",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"waypointSymbol\":\"{{ $json.waypoint }}\"}"
+      },
+      "id": "9093c5ef",
+      "name": "Navigate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        260
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/extract",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "c3fb3d00",
+      "name": "Mine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/dock",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "dc0d1c47",
+      "name": "Dock",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/deliver",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"shipSymbol\":\"{{ $json.ship }}\",\"tradeSymbol\":\"{{ $json.tradeSymbol }}\",\"units\":{{ $json.units }}}"
+      },
+      "id": "2e1e413a",
+      "name": "Deliver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        560
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/refuel",
+        "options": {},
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "343243c8",
+      "name": "Refuel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        660
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "3ce0c0b5",
+      "name": "Wait/Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "{\"title\":\"Contract accepted!\",\"message\":\"Mining loop started for HERMES-FLEET2\",\"severity\":\"info\"}",
+        "options": {}
+      },
+      "id": "ee8f9fbf",
+      "name": "Notify Accept",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\"title\":\"Delivery!\",\"message\":\"{{ $json.units }} x {{ $json.tradeSymbol }} delivered\",\"severity\":\"info\"}",
+        "options": {}
+      },
+      "id": "1d4916ae",
+      "name": "Notify Deliver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Every 2 min": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ships": {
+      "main": [
+        [
+          {
+            "node": "Get Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contracts": {
+      "main": [
+        [
+          {
+            "node": "Mission Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mission Control": {
+      "main": [
+        [
+          {
+            "node": "Action Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action Switch": {
+      "main": [
+        [
+          {
+            "node": "Accept Contract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Orbit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Navigate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deliver",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait/Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept Contract": {
+      "main": [
+        [
+          {
+            "node": "Notify Accept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver": {
+      "main": [
+        [
+          {
+            "node": "Notify Deliver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Every 2 min": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+  "activeVersionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+  "versionCounter": 24,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-27T04:38:03.138Z",
+      "createdAt": "2026-05-27T04:38:03.138Z",
+      "role": "workflow:owner",
+      "workflowId": "7iHITXOzRWYCAXVE",
+      "projectId": "pQ9yqqsBtuSGk44p",
+      "project": {
+        "updatedAt": "2026-01-15T01:26:38.562Z",
+        "createdAt": "2026-01-15T01:25:22.740Z",
+        "id": "pQ9yqqsBtuSGk44p",
+        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-27T04:45:53.202Z",
+    "createdAt": "2026-05-27T04:45:53.202Z",
+    "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+    "workflowId": "7iHITXOzRWYCAXVE",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 2
+              }
+            ]
+          }
+        },
+        "id": "d2d29210",
+        "name": "Every 2 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          100,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://api.spacetraders.io/v2/my/ships",
+          "options": {},
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
+        },
+        "id": "17390ddc",
+        "name": "Get Ships",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          300,
+          200
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://api.spacetraders.io/v2/my/contracts",
+          "options": {},
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
+        },
+        "id": "836ce5b1",
+        "name": "Get Contracts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          300,
+          400
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol;\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\nif (haveOre > 0 && wp === DELIVER_WP) {\n  if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n  if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n      contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n}\n\nif (haveOre > 0 && (cargoPct >= 0.8 || haveOre >= needed)) {\n  if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:DELIVER_WP, reason:'deliver'}}];\n}\n\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') {\n    if (cargoPct >= 0.9 && haveOre > 0) return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n    return [{json:{action:'mine', ship:ship.symbol}}];\n  }\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+        },
+        "id": "de0d8b3c",
+        "name": "Mission Control",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          550,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "daf259dc",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "accept_contract",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "d3e594f2",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "orbit",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "5a31db04",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "navigate",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "d9e599f9",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "mine",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "9c38b1f2",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "dock",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "e8ccd8c2",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "deliver",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "f9e2ba61",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "refuel",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              }
+            ]
+          },
+          "fallbackOutput": "extra",
+          "options": {}
+        },
+        "id": "788a159a",
+        "name": "Action Switch",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          800,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
+        },
+        "id": "82b1f515",
+        "name": "Accept Contract",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          60
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/orbit",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
+        },
+        "id": "0e856654",
+        "name": "Orbit",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          160
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/navigate",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"waypointSymbol\":\"{{ $json.waypoint }}\"}"
+        },
+        "id": "9093c5ef",
+        "name": "Navigate",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          260
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/extract",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
+        },
+        "id": "c3fb3d00",
+        "name": "Mine",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          360
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/dock",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
+        },
+        "id": "dc0d1c47",
+        "name": "Dock",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          460
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/deliver",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"shipSymbol\":\"{{ $json.ship }}\",\"tradeSymbol\":\"{{ $json.tradeSymbol }}\",\"units\":{{ $json.units }}}"
+        },
+        "id": "2e1e413a",
+        "name": "Deliver",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          560
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/refuel",
+          "options": {},
+          "continueOnFail": true,
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
+        },
+        "id": "343243c8",
+        "name": "Refuel",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          660
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "3ce0c0b5",
+        "name": "Wait/Skip",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1050,
+          760
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "contentType": "json",
+          "body": "{\"title\":\"Contract accepted!\",\"message\":\"Mining loop started for HERMES-FLEET2\",\"severity\":\"info\"}",
+          "options": {}
+        },
+        "id": "ee8f9fbf",
+        "name": "Notify Accept",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          60
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "contentType": "json",
+          "body": "={\"title\":\"Delivery!\",\"message\":\"{{ $json.units }} x {{ $json.tradeSymbol }} delivered\",\"severity\":\"info\"}",
+          "options": {}
+        },
+        "id": "1d4916ae",
+        "name": "Notify Deliver",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          560
+        ]
+      }
+    ],
+    "connections": {
+      "Every 2 min": {
+        "main": [
+          [
+            {
+              "node": "Get Ships",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Ships": {
+        "main": [
+          [
+            {
+              "node": "Get Contracts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Contracts": {
+        "main": [
+          [
+            {
+              "node": "Mission Control",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mission Control": {
+        "main": [
+          [
+            {
+              "node": "Action Switch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Action Switch": {
+        "main": [
+          [
+            {
+              "node": "Accept Contract",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Orbit",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Navigate",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mine",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Dock",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Deliver",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Refuel",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait/Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Accept Contract": {
+        "main": [
+          [
+            {
+              "node": "Notify Accept",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Deliver": {
+        "main": [
+          [
+            {
+              "node": "Notify Deliver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Martin Castaneda",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-27T04:45:53.367Z",
+        "id": 104,
+        "workflowId": "7iHITXOzRWYCAXVE",
+        "versionId": "33440b4b-3b9b-4ad3-b2ca-cd837d6d4bff",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      }
+    ]
+  }
+}

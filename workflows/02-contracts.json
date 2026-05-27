@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:26:18.471Z",
+  "updatedAt": "2026-05-27T04:38:02.592Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
@@ -18,7 +18,7 @@
           ]
         }
       },
-      "id": "3d2427ef",
+      "id": "85f5a6b1",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
@@ -31,12 +31,12 @@
       "parameters": {
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/contracts",
+        "options": {},
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
-        "options": {},
         "alwaysOutputData": true
       },
-      "id": "a1041a95",
+      "id": "d8dee384",
       "name": "List Contracts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -53,9 +53,9 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst raw = $input.first().json.data || [];\nconst all = Array.isArray(raw) ? raw : [];\nconst unaccepted = all.filter(c => !c.accepted);\nconst fulfilled = all.filter(c => c.accepted && !c.fulfilled && c.terms?.deliver?.every(d => d.unitsFulfilled >= d.unitsRequired));\nconst active = all.filter(c => c.accepted && !c.fulfilled);\nreturn [{json: {unaccepted, fulfilled, active,\n  summary: `Unaccepted: ${unaccepted.length}, Ready to fulfill: ${fulfilled.length}, Active: ${active.length}`}}];\n"
+        "jsCode": "\nconst raw = $input.first().json.data || [];\nconst all = Array.isArray(raw) ? raw : [];\nconst unaccepted    = all.filter(c => !c.accepted);\nconst fulfilled     = all.filter(c => c.accepted && !c.fulfilled &&\n  c.terms?.deliver?.every(d => d.unitsFulfilled >= d.unitsRequired));\nconst active        = all.filter(c => c.accepted && !c.fulfilled);\nreturn [{json: {unaccepted, fulfilled, active,\n  summary: `Unaccepted: ${unaccepted.length}, Ready: ${fulfilled.length}, Active: ${active.length}`}}];\n"
       },
-      "id": "1ecc4279",
+      "id": "3fc36162",
       "name": "Categorize",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -66,47 +66,33 @@
     },
     {
       "parameters": {
-        "batchSize": 1,
-        "options": {}
+        "jsCode": "\nreturn ($json.unaccepted || []).map(c => ({json: {contractId: c.id}}));\n"
       },
-      "id": "7206a0fa",
-      "name": "Each Unaccepted",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        700,
-        200
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
-      },
-      "id": "b82c8e25",
-      "name": "Set Accept ID",
+      "id": "1dc88bb5",
+      "name": "Extract Unaccepted",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        200
+        700,
+        180
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "options": {},
         "continueOnFail": true,
-        "options": {}
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       },
-      "id": "5ac6d677",
+      "id": "20152387",
       "name": "Accept Contract",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1100,
-        200
+        950,
+        180
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -117,47 +103,33 @@
     },
     {
       "parameters": {
-        "batchSize": 1,
-        "options": {}
+        "jsCode": "\nreturn ($json.fulfilled || []).map(c => ({json: {contractId: c.id}}));\n"
       },
-      "id": "197360aa",
-      "name": "Each Fulfilled",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        700,
-        400
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
-      },
-      "id": "94f866cc",
-      "name": "Set Fulfill ID",
+      "id": "120f5dbc",
+      "name": "Extract Fulfilled",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        400
+        700,
+        380
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/fulfill",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "options": {},
         "continueOnFail": true,
-        "options": {}
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       },
-      "id": "ff65ffb6",
+      "id": "73a13ced",
       "name": "Fulfill Contract",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1100,
-        400
+        950,
+        380
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -175,13 +147,13 @@
         "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
         "options": {}
       },
-      "id": "7033205e",
+      "id": "f1e81683",
       "name": "Notify Summary",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         700,
-        550
+        500
       ]
     }
   ],
@@ -212,12 +184,12 @@
       "main": [
         [
           {
-            "node": "Each Unaccepted",
+            "node": "Extract Unaccepted",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Each Fulfilled",
+            "node": "Extract Fulfilled",
             "type": "main",
             "index": 0
           },
@@ -229,18 +201,7 @@
         ]
       ]
     },
-    "Each Unaccepted": {
-      "main": [
-        [
-          {
-            "node": "Set Accept ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Accept ID": {
+    "Extract Unaccepted": {
       "main": [
         [
           {
@@ -251,18 +212,7 @@
         ]
       ]
     },
-    "Each Fulfilled": {
-      "main": [
-        [
-          {
-            "node": "Set Fulfill ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Fulfill ID": {
+    "Extract Fulfilled": {
       "main": [
         [
           {
@@ -284,9 +234,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "b30f245a-27ee-4286-b595-9c87f238a8d4",
-  "activeVersionId": "b30f245a-27ee-4286-b595-9c87f238a8d4",
-  "versionCounter": 23,
+  "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
+  "activeVersionId": "95d98e58-ed5c-4a24-9600-efa015263012",
+  "versionCounter": 28,
   "triggerCount": 1,
   "shared": [
     {
@@ -309,9 +259,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T04:26:18.475Z",
-    "createdAt": "2026-05-27T04:26:18.475Z",
-    "versionId": "b30f245a-27ee-4286-b595-9c87f238a8d4",
+    "updatedAt": "2026-05-27T04:38:02.593Z",
+    "createdAt": "2026-05-27T04:38:02.593Z",
+    "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
     "workflowId": "l4FhC5LIhNxLpeHJ",
     "nodes": [
       {
@@ -325,7 +275,7 @@
             ]
           }
         },
-        "id": "3d2427ef",
+        "id": "85f5a6b1",
         "name": "Every 5 min",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.1,
@@ -338,12 +288,12 @@
         "parameters": {
           "method": "GET",
           "url": "https://api.spacetraders.io/v2/my/contracts",
+          "options": {},
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "httpHeaderAuth",
-          "options": {},
           "alwaysOutputData": true
         },
-        "id": "a1041a95",
+        "id": "d8dee384",
         "name": "List Contracts",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
@@ -360,9 +310,9 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst raw = $input.first().json.data || [];\nconst all = Array.isArray(raw) ? raw : [];\nconst unaccepted = all.filter(c => !c.accepted);\nconst fulfilled = all.filter(c => c.accepted && !c.fulfilled && c.terms?.deliver?.every(d => d.unitsFulfilled >= d.unitsRequired));\nconst active = all.filter(c => c.accepted && !c.fulfilled);\nreturn [{json: {unaccepted, fulfilled, active,\n  summary: `Unaccepted: ${unaccepted.length}, Ready to fulfill: ${fulfilled.length}, Active: ${active.length}`}}];\n"
+          "jsCode": "\nconst raw = $input.first().json.data || [];\nconst all = Array.isArray(raw) ? raw : [];\nconst unaccepted    = all.filter(c => !c.accepted);\nconst fulfilled     = all.filter(c => c.accepted && !c.fulfilled &&\n  c.terms?.deliver?.every(d => d.unitsFulfilled >= d.unitsRequired));\nconst active        = all.filter(c => c.accepted && !c.fulfilled);\nreturn [{json: {unaccepted, fulfilled, active,\n  summary: `Unaccepted: ${unaccepted.length}, Ready: ${fulfilled.length}, Active: ${active.length}`}}];\n"
         },
-        "id": "1ecc4279",
+        "id": "3fc36162",
         "name": "Categorize",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -373,47 +323,33 @@
       },
       {
         "parameters": {
-          "batchSize": 1,
-          "options": {}
+          "jsCode": "\nreturn ($json.unaccepted || []).map(c => ({json: {contractId: c.id}}));\n"
         },
-        "id": "7206a0fa",
-        "name": "Each Unaccepted",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 3,
-        "position": [
-          700,
-          200
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
-        },
-        "id": "b82c8e25",
-        "name": "Set Accept ID",
+        "id": "1dc88bb5",
+        "name": "Extract Unaccepted",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          900,
-          200
+          700,
+          180
         ]
       },
       {
         "parameters": {
           "method": "POST",
           "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
+          "options": {},
           "continueOnFail": true,
-          "options": {}
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
         },
-        "id": "5ac6d677",
+        "id": "20152387",
         "name": "Accept Contract",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1100,
-          200
+          950,
+          180
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -424,47 +360,33 @@
       },
       {
         "parameters": {
-          "batchSize": 1,
-          "options": {}
+          "jsCode": "\nreturn ($json.fulfilled || []).map(c => ({json: {contractId: c.id}}));\n"
         },
-        "id": "197360aa",
-        "name": "Each Fulfilled",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 3,
-        "position": [
-          700,
-          400
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{json: {contractId: $input.first().json.id}}];"
-        },
-        "id": "94f866cc",
-        "name": "Set Fulfill ID",
+        "id": "120f5dbc",
+        "name": "Extract Fulfilled",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          900,
-          400
+          700,
+          380
         ]
       },
       {
         "parameters": {
           "method": "POST",
           "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/fulfill",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
+          "options": {},
           "continueOnFail": true,
-          "options": {}
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth"
         },
-        "id": "ff65ffb6",
+        "id": "73a13ced",
         "name": "Fulfill Contract",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1100,
-          400
+          950,
+          380
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -482,13 +404,13 @@
           "jsonBody": "={\"title\":\"Contract Manager\",\"message\":{{ JSON.stringify($json.summary) }},\"severity\":\"info\"}",
           "options": {}
         },
-        "id": "7033205e",
+        "id": "f1e81683",
         "name": "Notify Summary",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
           700,
-          550
+          500
         ]
       }
     ],
@@ -519,12 +441,12 @@
         "main": [
           [
             {
-              "node": "Each Unaccepted",
+              "node": "Extract Unaccepted",
               "type": "main",
               "index": 0
             },
             {
-              "node": "Each Fulfilled",
+              "node": "Extract Fulfilled",
               "type": "main",
               "index": 0
             },
@@ -536,18 +458,7 @@
           ]
         ]
       },
-      "Each Unaccepted": {
-        "main": [
-          [
-            {
-              "node": "Set Accept ID",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Set Accept ID": {
+      "Extract Unaccepted": {
         "main": [
           [
             {
@@ -558,18 +469,7 @@
           ]
         ]
       },
-      "Each Fulfilled": {
-        "main": [
-          [
-            {
-              "node": "Set Fulfill ID",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Set Fulfill ID": {
+      "Extract Fulfilled": {
         "main": [
           [
             {
@@ -587,10 +487,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T04:26:18.609Z",
-        "id": 89,
+        "createdAt": "2026-05-27T04:38:02.651Z",
+        "id": 95,
         "workflowId": "l4FhC5LIhNxLpeHJ",
-        "versionId": "b30f245a-27ee-4286-b595-9c87f238a8d4",
+        "versionId": "95d98e58-ed5c-4a24-9600-efa015263012",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
