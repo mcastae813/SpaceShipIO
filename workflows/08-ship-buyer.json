@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T15:03:59.698Z",
+  "updatedAt": "2026-05-27T15:40:36.278Z",
   "createdAt": "2026-05-27T15:03:59.698Z",
   "id": "QLLz8mSf120TQqW9",
   "name": "ST-08 Ship Buyer",
@@ -40,7 +40,9 @@
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/agent",
         "authentication": "predefinedCredentialType",
-        "options": {}
+        "options": {},
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -62,7 +64,9 @@
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/ships",
         "authentication": "predefinedCredentialType",
-        "options": {}
+        "options": {},
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -75,7 +79,7 @@
       "id": "eecdc9fb-472c-4200-80e0-2acf2362389f",
       "name": "Check Fleet",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 4.2,
+      "typeVersion": 2,
       "position": [
         660,
         0
@@ -97,7 +101,9 @@
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-H53/shipyard",
         "authentication": "predefinedCredentialType",
-        "options": {}
+        "options": {},
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -110,13 +116,13 @@
       "id": "b3de9e2e-15a8-4d3a-bf1e-09d862ed663b",
       "name": "Select Ship",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 4.2,
+      "typeVersion": 2,
       "position": [
         1100,
         0
       ],
       "parameters": {
-        "jsCode": "const {budget} = $input.first().json;\nconst shipyard = $('Get Shipyard').first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\n// Require a mining laser mount OR a mining-type ship name\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\n// Cheapest first \u2014 grow fleet faster\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
+        "jsCode": "\nconst {budget} = $('Check Fleet').first().json;\nconst shipyard = $input.first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
       }
     },
     {
@@ -135,7 +141,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"shipType\":\"{{ $json.shipType }}\",\"waypointSymbol\":\"{{ $json.waypointSymbol }}\"}",
-        "options": {}
+        "options": {},
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -253,9 +261,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "4ba847ad-d9c4-45ac-8eb1-882d9f6ccd22",
-  "activeVersionId": "4ba847ad-d9c4-45ac-8eb1-882d9f6ccd22",
-  "versionCounter": 4,
+  "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
+  "activeVersionId": "4210079e-1165-4148-ad1c-713062664f8b",
+  "versionCounter": 19,
   "triggerCount": 1,
   "shared": [
     {
@@ -278,9 +286,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T15:03:59.711Z",
-    "createdAt": "2026-05-27T15:03:59.711Z",
-    "versionId": "4ba847ad-d9c4-45ac-8eb1-882d9f6ccd22",
+    "updatedAt": "2026-05-27T15:40:36.281Z",
+    "createdAt": "2026-05-27T15:40:36.281Z",
+    "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
     "workflowId": "QLLz8mSf120TQqW9",
     "nodes": [
       {
@@ -316,7 +324,9 @@
           "method": "GET",
           "url": "https://api.spacetraders.io/v2/my/agent",
           "authentication": "predefinedCredentialType",
-          "options": {}
+          "options": {},
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -338,7 +348,9 @@
           "method": "GET",
           "url": "https://api.spacetraders.io/v2/my/ships",
           "authentication": "predefinedCredentialType",
-          "options": {}
+          "options": {},
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -351,7 +363,7 @@
         "id": "eecdc9fb-472c-4200-80e0-2acf2362389f",
         "name": "Check Fleet",
         "type": "n8n-nodes-base.code",
-        "typeVersion": 4.2,
+        "typeVersion": 2,
         "position": [
           660,
           0
@@ -373,7 +385,9 @@
           "method": "GET",
           "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-H53/shipyard",
           "authentication": "predefinedCredentialType",
-          "options": {}
+          "options": {},
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -386,13 +400,13 @@
         "id": "b3de9e2e-15a8-4d3a-bf1e-09d862ed663b",
         "name": "Select Ship",
         "type": "n8n-nodes-base.code",
-        "typeVersion": 4.2,
+        "typeVersion": 2,
         "position": [
           1100,
           0
         ],
         "parameters": {
-          "jsCode": "const {budget} = $input.first().json;\nconst shipyard = $('Get Shipyard').first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\n// Require a mining laser mount OR a mining-type ship name\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\n// Cheapest first \u2014 grow fleet faster\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
+          "jsCode": "\nconst {budget} = $('Check Fleet').first().json;\nconst shipyard = $input.first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
         }
       },
       {
@@ -411,7 +425,9 @@
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={\"shipType\":\"{{ $json.shipType }}\",\"waypointSymbol\":\"{{ $json.waypointSymbol }}\"}",
-          "options": {}
+          "options": {},
+          "nodeCredentialType": "httpHeaderAuth",
+          "alwaysOutputData": true
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -524,10 +540,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T15:03:59.777Z",
-        "id": 170,
+        "createdAt": "2026-05-27T15:40:36.364Z",
+        "id": 176,
         "workflowId": "QLLz8mSf120TQqW9",
-        "versionId": "4ba847ad-d9c4-45ac-8eb1-882d9f6ccd22",
+        "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
