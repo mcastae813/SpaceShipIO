@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:14:22.881Z",
+  "updatedAt": "2026-05-27T05:24:31.615Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -13,7 +13,7 @@
           "interval": [
             {
               "field": "minutes",
-              "minutesInterval": 2
+              "minutesInterval": 1
             }
           ]
         }
@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk \u2014 dump it so we can keep mining contract ore\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// MINE\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'mine', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+        "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// AT ASTEROID: survey first, then mine with survey\nif (wp === ASTEROID && status === 'IN_ORBIT') {\n  const staticData = $getWorkflowStaticData('global');\n  const survey = staticData.survey;\n  const surveyValid = survey && new Date(survey.expiration).getTime() > now;\n\n  if (!surveyValid) {\n    return [{json:{action:'survey', ship:ship.symbol}}];\n  }\n  return [{json:{action:'mine_survey', ship:ship.symbol, survey}}];\n}\n\nif (wp === ASTEROID && status === 'DOCKED') {\n  return [{json:{action:'orbit', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
       },
       "id": "de0d8b3c",
       "name": "Mission Control",
@@ -246,6 +246,50 @@
                     "id": "649ade90-485f-46f6-87fe-0a06322706d7",
                     "leftValue": "={{ $json.action }}",
                     "rightValue": "jettison",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "fe6a5f4d-99d6-450c-9ed5-d9f6dbd30741",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "survey",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "36fbc16b-c5b0-4289-9f45-cb894e12eb15",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "mine_survey",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -515,6 +559,68 @@
         720
       ],
       "id": "304422d5-530e-4a73-bb94-a7f42001ca22"
+    },
+    {
+      "name": "Survey",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/survey",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      },
+      "position": [
+        1460,
+        840
+      ],
+      "id": "8311dada-5734-45ff-9b12-d2d040e1c9d2"
+    },
+    {
+      "name": "Store Survey",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst result = $input.first().json;\nconst surveys = result.data?.surveys || [];\n\n// Prefer survey that has contract ore deposits\nconst contractOre = 'ALUMINUM_ORE';\nconst best = surveys.find(s => s.deposits?.some(d => d.symbol === contractOre)) || surveys[0];\n\nif (best) {\n  staticData.survey = best;\n  const ores = best.deposits.map(d => d.symbol).join(', ');\n  return [{json:{stored:true, signature:best.signature, ores, expiration:best.expiration}}];\n}\nreturn [{json:{stored:false}}];\n"
+      },
+      "position": [
+        1680,
+        840
+      ],
+      "id": "0b91d500-7b7f-4fb0-98ac-6d0865a8d2dc"
+    },
+    {
+      "name": "Mine Survey",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/extract/survey",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({survey: $json.survey}) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "56bs6PUHWdbliMlu",
+          "name": "SpaceTraders Auth"
+        }
+      },
+      "position": [
+        1460,
+        960
+      ],
+      "id": "4092d874-19d7-4026-86af-d44c6d9a76ea"
     }
   ],
   "connections": {
@@ -619,6 +725,20 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Survey",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mine Survey",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -643,6 +763,17 @@
           }
         ]
       ]
+    },
+    "Survey": {
+      "main": [
+        [
+          {
+            "node": "Store Survey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -655,9 +786,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
-  "activeVersionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
-  "versionCounter": 35,
+  "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
+  "activeVersionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
+  "versionCounter": 40,
   "triggerCount": 1,
   "shared": [
     {
@@ -680,9 +811,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:14:22.882Z",
-    "createdAt": "2026-05-27T05:14:22.882Z",
-    "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
+    "updatedAt": "2026-05-27T05:24:31.617Z",
+    "createdAt": "2026-05-27T05:24:31.617Z",
+    "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
     "workflowId": "7iHITXOzRWYCAXVE",
     "nodes": [
       {
@@ -691,7 +822,7 @@
             "interval": [
               {
                 "field": "minutes",
-                "minutesInterval": 2
+                "minutesInterval": 1
               }
             ]
           }
@@ -755,7 +886,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk \u2014 dump it so we can keep mining contract ore\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// MINE\nif (wp === ASTEROID) {\n  if (status === 'DOCKED') return [{json:{action:'orbit', ship:ship.symbol}}];\n  if (status === 'IN_ORBIT') return [{json:{action:'mine', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
+          "jsCode": "\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $input.first().json.data || [];\n\nconst ship = ships.find(s => s.frame?.symbol === 'FRAME_FRIGATE') || ships[0];\nif (!ship) return [{json:{action:'no_ship'}}];\n\nconst nav    = ship.nav;\nconst cargo  = ship.cargo;\nconst fuel   = ship.fuel;\nconst status = nav.status;\nconst wp     = nav.waypointSymbol;\nconst now    = Date.now();\n\nconst cdExp = ship.cooldown?.expiration ? new Date(ship.cooldown.expiration).getTime() : 0;\nif (cdExp > now) return [{json:{action:'on_cooldown', ship:ship.symbol, remainMs:cdExp-now}}];\n\nif (status === 'IN_TRANSIT') {\n  const arr = new Date(nav.route?.arrival).getTime();\n  if (arr > now) return [{json:{action:'in_transit', ship:ship.symbol, eta:nav.route.arrival}}];\n}\n\nconst ASTEROID   = 'X1-UX96-B12';\nconst DELIVER_WP = 'X1-UX96-H52';\n\nconst activeC  = contracts.find(c => c.accepted && !c.fulfilled);\nconst pendingC = contracts.find(c => !c.accepted && !c.fulfilled);\n\nif (!activeC && pendingC) {\n  return [{json:{action:'accept_contract', ship:ship.symbol, contractId:pendingC.id}}];\n}\n\nconst term     = activeC?.terms?.deliver?.[0];\nconst tradeSym = term?.tradeSymbol || 'ALUMINUM_ORE';\nconst needed   = (term?.unitsRequired||0) - (term?.unitsFulfilled||0);\nconst haveOre  = cargo.inventory.find(i => i.symbol === tradeSym)?.units || 0;\nconst cargoPct = cargo.capacity > 0 ? cargo.units / cargo.capacity : 0;\nconst fuelPct  = fuel.capacity > 0 ? fuel.current / fuel.capacity : 1;\n\n// DELIVER: only when we actually have contract ore\nif (haveOre > 0) {\n  const shouldDeliver = wp === DELIVER_WP || cargoPct >= 0.8 || haveOre >= needed;\n  if (shouldDeliver) {\n    if (wp === DELIVER_WP) {\n      if (status === 'IN_ORBIT') return [{json:{action:'dock', ship:ship.symbol}}];\n      if (status === 'DOCKED')   return [{json:{action:'deliver', ship:ship.symbol,\n          contractId:activeC.id, tradeSymbol:tradeSym, units:haveOre}}];\n    }\n    if (status === 'DOCKED')   return [{json:{action:'orbit', ship:ship.symbol}}];\n    if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n        waypoint:DELIVER_WP, reason:'deliver'}}];\n  }\n}\n\n// JETTISON: cargo 70%+ full with junk\nconst junk = cargo.inventory.filter(i => i.symbol !== tradeSym);\nif (cargoPct >= 0.7 && junk.length > 0) {\n  return junk.map(i => ({json:{action:'jettison', ship:ship.symbol, symbol:i.symbol, units:i.units}}));\n}\n\n// NAVIGATE TO ASTEROID\nif (wp !== ASTEROID) {\n  if (status === 'DOCKED') {\n    if (fuelPct < 0.2) return [{json:{action:'refuel', ship:ship.symbol}}];\n    return [{json:{action:'orbit', ship:ship.symbol}}];\n  }\n  if (status === 'IN_ORBIT') return [{json:{action:'navigate', ship:ship.symbol,\n      waypoint:ASTEROID, reason:'mine'}}];\n}\n\n// AT ASTEROID: survey first, then mine with survey\nif (wp === ASTEROID && status === 'IN_ORBIT') {\n  const staticData = $getWorkflowStaticData('global');\n  const survey = staticData.survey;\n  const surveyValid = survey && new Date(survey.expiration).getTime() > now;\n\n  if (!surveyValid) {\n    return [{json:{action:'survey', ship:ship.symbol}}];\n  }\n  return [{json:{action:'mine_survey', ship:ship.symbol, survey}}];\n}\n\nif (wp === ASTEROID && status === 'DOCKED') {\n  return [{json:{action:'orbit', ship:ship.symbol}}];\n}\n\nreturn [{json:{action:'idle', ship:ship.symbol, status, wp}}];\n"
         },
         "id": "de0d8b3c",
         "name": "Mission Control",
@@ -924,6 +1055,50 @@
                       "id": "649ade90-485f-46f6-87fe-0a06322706d7",
                       "leftValue": "={{ $json.action }}",
                       "rightValue": "jettison",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "fe6a5f4d-99d6-450c-9ed5-d9f6dbd30741",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "survey",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ]
+                },
+                "renameOutput": false
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "id": "36fbc16b-c5b0-4289-9f45-cb894e12eb15",
+                      "leftValue": "={{ $json.action }}",
+                      "rightValue": "mine_survey",
                       "operator": {
                         "type": "string",
                         "operation": "equals"
@@ -1193,6 +1368,68 @@
           720
         ],
         "id": "304422d5-530e-4a73-bb94-a7f42001ca22"
+      },
+      {
+        "name": "Survey",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/survey",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        },
+        "position": [
+          1460,
+          840
+        ],
+        "id": "8311dada-5734-45ff-9b12-d2d040e1c9d2"
+      },
+      {
+        "name": "Store Survey",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "parameters": {
+          "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst result = $input.first().json;\nconst surveys = result.data?.surveys || [];\n\n// Prefer survey that has contract ore deposits\nconst contractOre = 'ALUMINUM_ORE';\nconst best = surveys.find(s => s.deposits?.some(d => d.symbol === contractOre)) || surveys[0];\n\nif (best) {\n  staticData.survey = best;\n  const ores = best.deposits.map(d => d.symbol).join(', ');\n  return [{json:{stored:true, signature:best.signature, ores, expiration:best.expiration}}];\n}\nreturn [{json:{stored:false}}];\n"
+        },
+        "position": [
+          1680,
+          840
+        ],
+        "id": "0b91d500-7b7f-4fb0-98ac-6d0865a8d2dc"
+      },
+      {
+        "name": "Mine Survey",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/extract/survey",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({survey: $json.survey}) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "56bs6PUHWdbliMlu",
+            "name": "SpaceTraders Auth"
+          }
+        },
+        "position": [
+          1460,
+          960
+        ],
+        "id": "4092d874-19d7-4026-86af-d44c6d9a76ea"
       }
     ],
     "connections": {
@@ -1297,6 +1534,20 @@
               "type": "main",
               "index": 0
             }
+          ],
+          [
+            {
+              "node": "Survey",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mine Survey",
+              "type": "main",
+              "index": 0
+            }
           ]
         ]
       },
@@ -1321,6 +1572,17 @@
             }
           ]
         ]
+      },
+      "Survey": {
+        "main": [
+          [
+            {
+              "node": "Store Survey",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Martin Castaneda",
@@ -1329,10 +1591,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:14:22.961Z",
-        "id": 110,
+        "createdAt": "2026-05-27T05:24:31.707Z",
+        "id": 112,
         "workflowId": "7iHITXOzRWYCAXVE",
-        "versionId": "7f91defc-6c01-48dc-93ec-c1ee0ace04b2",
+        "versionId": "f39d0d26-9ed2-41d6-a501-7d5f2e143b49",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
