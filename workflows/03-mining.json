@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T07:18:59.036Z",
+  "updatedAt": "2026-05-27T14:13:27.651Z",
   "createdAt": "2026-05-27T00:34:27.408Z",
   "id": "kG3Thml3Dku9DkYY",
   "name": "ST-03 Mining Controller",
@@ -80,7 +80,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\n\n// Silently stop \u2014 ship is busy or not in a state we can act on\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\n\nif (status !== 'IN_ORBIT') return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
+        "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\nconst wp = s.nav?.waypointSymbol;\nconst ASTEROID = 'X1-UX96-B12';\n\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\nif (status !== 'IN_ORBIT') return [];\nif (wp !== ASTEROID) return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
       },
       "id": "c64f7f2d",
       "name": "Decide",
@@ -305,9 +305,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
-  "activeVersionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
-  "versionCounter": 27,
+  "versionId": "da979546-17d6-4381-8726-5e1a797bc9cd",
+  "activeVersionId": "da979546-17d6-4381-8726-5e1a797bc9cd",
+  "versionCounter": 32,
   "triggerCount": 1,
   "shared": [
     {
@@ -330,9 +330,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T07:10:36.624Z",
-    "createdAt": "2026-05-27T07:10:36.624Z",
-    "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+    "updatedAt": "2026-05-27T14:13:27.654Z",
+    "createdAt": "2026-05-27T14:13:27.654Z",
+    "versionId": "da979546-17d6-4381-8726-5e1a797bc9cd",
     "workflowId": "kG3Thml3Dku9DkYY",
     "nodes": [
       {
@@ -408,7 +408,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\n\n// Silently stop \u2014 ship is busy or not in a state we can act on\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\n\nif (status !== 'IN_ORBIT') return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
+          "jsCode": "const s = $input.first().json;\nconst now = Date.now();\nconst cooldownExp = s.cooldown?.expiration ? new Date(s.cooldown.expiration).getTime() : 0;\nconst cargoPct = s.cargo?.capacity > 0 ? s.cargo.units / s.cargo.capacity : 0;\nconst status = s.nav?.status;\nconst wp = s.nav?.waypointSymbol;\nconst ASTEROID = 'X1-UX96-B12';\n\nif (status === 'IN_TRANSIT' || status === 'DOCKED') return [];\nif (cooldownExp > now) return [];\nif (status !== 'IN_ORBIT') return [];\nif (wp !== ASTEROID) return [];\n\nif (cargoPct >= 0.9) return [{json:{ship:s.symbol, action:'full_cargo', title:'Mining: Cargo Full', message:`${s.symbol} cargo at ${Math.round(cargoPct*100)}% \u2014 ready to sell`}}];\nreturn [{json:{ship:s.symbol, action:'extract'}}];\n"
         },
         "id": "c64f7f2d",
         "name": "Decide",
@@ -628,27 +628,11 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T07:10:36.943Z",
-        "id": 138,
+        "createdAt": "2026-05-27T14:13:27.731Z",
+        "id": 165,
         "workflowId": "kG3Thml3Dku9DkYY",
-        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+        "versionId": "da979546-17d6-4381-8726-5e1a797bc9cd",
         "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:59.158Z",
-        "id": 146,
-        "workflowId": "kG3Thml3Dku9DkYY",
-        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:58.933Z",
-        "id": 145,
-        "workflowId": "kG3Thml3Dku9DkYY",
-        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
-        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]
