@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:43:19.129Z",
+  "updatedAt": "2026-05-27T05:50:32.950Z",
   "createdAt": "2026-05-27T00:27:10.602Z",
   "id": "Vb1VCWThIkn9nZZJ",
   "name": "ST-05 Fleet Commander",
@@ -199,11 +199,18 @@
       }
     },
     {
-      "parameters": {},
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":\"\ud83d\ude80 Fleet Commander\",\"message\":\"{{ $json.ship }}: {{ $json.action }}\",\"severity\":\"info\"}",
+        "options": {}
+      },
       "id": "73f2086b",
       "name": "Skip",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1300,
         480
@@ -303,9 +310,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
-  "activeVersionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
-  "versionCounter": 17,
+  "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
+  "activeVersionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
+  "versionCounter": 22,
   "triggerCount": 1,
   "shared": [
     {
@@ -328,9 +335,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:43:19.130Z",
-    "createdAt": "2026-05-27T05:43:19.130Z",
-    "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
+    "updatedAt": "2026-05-27T05:50:32.955Z",
+    "createdAt": "2026-05-27T05:50:32.955Z",
+    "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
     "workflowId": "Vb1VCWThIkn9nZZJ",
     "nodes": [
       {
@@ -525,11 +532,18 @@
         }
       },
       {
-        "parameters": {},
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"title\":\"\ud83d\ude80 Fleet Commander\",\"message\":\"{{ $json.ship }}: {{ $json.action }}\",\"severity\":\"info\"}",
+          "options": {}
+        },
         "id": "73f2086b",
         "name": "Skip",
-        "type": "n8n-nodes-base.noOp",
-        "typeVersion": 1,
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "position": [
           1300,
           480
@@ -625,10 +639,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:43:19.184Z",
-        "id": 120,
+        "createdAt": "2026-05-27T05:50:33.197Z",
+        "id": 126,
         "workflowId": "Vb1VCWThIkn9nZZJ",
-        "versionId": "f3d430ef-354c-40e8-9f1d-5f4eb3e6957c",
+        "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }

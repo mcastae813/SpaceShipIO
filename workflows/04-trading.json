@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:43:18.937Z",
+  "updatedAt": "2026-05-27T05:54:31.354Z",
   "createdAt": "2026-05-27T00:34:27.622Z",
   "id": "pP6uLmDqtxgBrAXA",
   "name": "ST-04 Trading Engine",
@@ -8,6 +8,9 @@
   "isArchived": false,
   "nodes": [
     {
+      "name": "Every 10 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
       "parameters": {
         "rule": {
           "interval": [
@@ -18,91 +21,52 @@
           ]
         }
       },
-      "id": "022623c6",
-      "name": "Every 10 min",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
       "position": [
-        100,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "https://api.spacetraders.io/v2/my/ships",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "options": {},
-        "alwaysOutputData": true
-      },
-      "id": "a49ec6d3",
-      "name": "List Ships",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        300,
+        240,
         300
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
-        }
-      }
+      "id": "e27c57f3-1b18-4387-9729-ff6cf04b03a8"
     },
     {
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "677a0712",
-      "name": "Each Ship",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        500,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "=https://api.spacetraders.io/v2/systems/{{$json.nav.systemSymbol}}/waypoints/{{$json.nav.waypointSymbol}}/market",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "continueOnFail": true,
-        "options": {}
-      },
-      "id": "0ae40f5a",
       "name": "Get Market",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        700,
-        300
-      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-A1/market",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
       "credentials": {
         "httpHeaderAuth": {
           "id": "56bs6PUHWdbliMlu",
           "name": "SpaceTraders Auth"
         }
-      }
+      },
+      "position": [
+        460,
+        300
+      ],
+      "id": "264a94d7-ebdb-404f-a1db-349bb5a414ca"
     },
     {
-      "parameters": {
-        "jsCode": "\nconst market = $input.first().json.data;\nif (!market?.tradeGoods?.length) return [{json:{skip:true}}];\nconst goods = market.tradeGoods\n  .map(g => ({symbol: g.symbol, margin: g.sellPrice - g.purchasePrice, buy: g.purchasePrice, sell: g.sellPrice}))\n  .filter(g => g.margin > 0)\n  .sort((a,b) => b.margin - a.margin)\n  .slice(0,3);\nif (!goods.length) return [{json:{skip:true}}];\nconst lines = goods.map(g => `${g.symbol}: buy ${g.buy} \u2192 sell ${g.sell} (+${g.margin})`).join('\\n');\nreturn [{json:{skip:false, title:'Trade Hint @ ' + (market.symbol||'?'), message:lines}}];\n"
-      },
-      "id": "6f3d2c43",
       "name": "Find Top Margins",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst market = $input.first().json.data;\nif (!market?.tradeGoods?.length) return [{json:{skip:true, reason:'no trade goods'}}];\nconst goods = market.tradeGoods\n  .map(g => ({symbol: g.symbol, margin: g.sellPrice - g.purchasePrice, buy: g.purchasePrice, sell: g.sellPrice}))\n  .filter(g => g.margin > 50)\n  .sort((a,b) => b.margin - a.margin)\n  .slice(0,5);\nif (!goods.length) return [{json:{skip:true, reason:'no margins > 50'}}];\nconst lines = goods.map(g => `${g.symbol}: ${g.buy}\u2192${g.sell} (+${g.margin})`).join('\\n');\nreturn [{json:{skip:false, message:`\ud83d\udcc8 X1-UX96-A1 top margins:\\n${lines}`}}];\n"
+      },
       "position": [
-        900,
+        680,
         300
-      ]
+      ],
+      "id": "ca08fc18-44f2-4feb-8a89-67202c88450f"
     },
     {
+      "name": "Has Margins?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
       "parameters": {
         "conditions": {
           "options": {
@@ -113,7 +77,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "id": "3c5ea392",
+              "id": "a1",
               "leftValue": "={{ $json.skip }}",
               "rightValue": true,
               "operator": {
@@ -124,71 +88,45 @@
           ]
         }
       },
-      "id": "fa2e93e5",
-      "name": "Has Margins?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
       "position": [
-        1100,
+        900,
         300
-      ]
+      ],
+      "id": "21e1f2a2-e640-49d1-b259-b77c532c7d97"
     },
     {
+      "name": "Send Hint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "parameters": {
         "method": "POST",
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
-        "contentType": "json",
-        "body": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}",
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":\"\ud83d\udcb9 Trading Engine\",\"message\":\"{{ $json.message }}\",\"severity\":\"info\"}",
         "options": {}
       },
-      "id": "d284b0e7",
-      "name": "Send Hint",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
       "position": [
-        1300,
-        200
-      ]
+        1120,
+        220
+      ],
+      "id": "9afc7d8c-455c-4d5b-9b79-e579c38a079a"
     },
     {
-      "parameters": {},
-      "id": "fbf420e4",
       "name": "No Market",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
+      "parameters": {},
       "position": [
-        1300,
-        400
-      ]
+        1120,
+        380
+      ],
+      "id": "5a4a3ef1-f25c-47d0-8585-269e25f4e96c"
     }
   ],
   "connections": {
     "Every 10 min": {
       "main": [
-        [
-          {
-            "node": "List Ships",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "List Ships": {
-      "main": [
-        [
-          {
-            "node": "Each Ship",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Each Ship": {
-      "main": [
-        [],
         [
           {
             "node": "Get Market",
@@ -249,9 +187,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "48221fd0-8074-4d5d-8c68-9d2c3cc24659",
-  "activeVersionId": "48221fd0-8074-4d5d-8c68-9d2c3cc24659",
-  "versionCounter": 12,
+  "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
+  "activeVersionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
+  "versionCounter": 27,
   "triggerCount": 1,
   "shared": [
     {
@@ -274,12 +212,15 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:43:18.938Z",
-    "createdAt": "2026-05-27T05:43:18.938Z",
-    "versionId": "48221fd0-8074-4d5d-8c68-9d2c3cc24659",
+    "updatedAt": "2026-05-27T05:54:31.355Z",
+    "createdAt": "2026-05-27T05:54:31.355Z",
+    "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
     "workflowId": "pP6uLmDqtxgBrAXA",
     "nodes": [
       {
+        "name": "Every 10 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
         "parameters": {
           "rule": {
             "interval": [
@@ -290,91 +231,52 @@
             ]
           }
         },
-        "id": "022623c6",
-        "name": "Every 10 min",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.1,
         "position": [
-          100,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "method": "GET",
-          "url": "https://api.spacetraders.io/v2/my/ships",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "options": {},
-          "alwaysOutputData": true
-        },
-        "id": "a49ec6d3",
-        "name": "List Ships",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          300,
+          240,
           300
         ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
+        "id": "e27c57f3-1b18-4387-9729-ff6cf04b03a8"
       },
       {
-        "parameters": {
-          "batchSize": 1,
-          "options": {}
-        },
-        "id": "677a0712",
-        "name": "Each Ship",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 3,
-        "position": [
-          500,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "method": "GET",
-          "url": "=https://api.spacetraders.io/v2/systems/{{$json.nav.systemSymbol}}/waypoints/{{$json.nav.waypointSymbol}}/market",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "continueOnFail": true,
-          "options": {}
-        },
-        "id": "0ae40f5a",
         "name": "Get Market",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          700,
-          300
-        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-A1/market",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "options": {}
+        },
         "credentials": {
           "httpHeaderAuth": {
             "id": "56bs6PUHWdbliMlu",
             "name": "SpaceTraders Auth"
           }
-        }
+        },
+        "position": [
+          460,
+          300
+        ],
+        "id": "264a94d7-ebdb-404f-a1db-349bb5a414ca"
       },
       {
-        "parameters": {
-          "jsCode": "\nconst market = $input.first().json.data;\nif (!market?.tradeGoods?.length) return [{json:{skip:true}}];\nconst goods = market.tradeGoods\n  .map(g => ({symbol: g.symbol, margin: g.sellPrice - g.purchasePrice, buy: g.purchasePrice, sell: g.sellPrice}))\n  .filter(g => g.margin > 0)\n  .sort((a,b) => b.margin - a.margin)\n  .slice(0,3);\nif (!goods.length) return [{json:{skip:true}}];\nconst lines = goods.map(g => `${g.symbol}: buy ${g.buy} \u2192 sell ${g.sell} (+${g.margin})`).join('\\n');\nreturn [{json:{skip:false, title:'Trade Hint @ ' + (market.symbol||'?'), message:lines}}];\n"
-        },
-        "id": "6f3d2c43",
         "name": "Find Top Margins",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
+        "parameters": {
+          "jsCode": "\nconst market = $input.first().json.data;\nif (!market?.tradeGoods?.length) return [{json:{skip:true, reason:'no trade goods'}}];\nconst goods = market.tradeGoods\n  .map(g => ({symbol: g.symbol, margin: g.sellPrice - g.purchasePrice, buy: g.purchasePrice, sell: g.sellPrice}))\n  .filter(g => g.margin > 50)\n  .sort((a,b) => b.margin - a.margin)\n  .slice(0,5);\nif (!goods.length) return [{json:{skip:true, reason:'no margins > 50'}}];\nconst lines = goods.map(g => `${g.symbol}: ${g.buy}\u2192${g.sell} (+${g.margin})`).join('\\n');\nreturn [{json:{skip:false, message:`\ud83d\udcc8 X1-UX96-A1 top margins:\\n${lines}`}}];\n"
+        },
         "position": [
-          900,
+          680,
           300
-        ]
+        ],
+        "id": "ca08fc18-44f2-4feb-8a89-67202c88450f"
       },
       {
+        "name": "Has Margins?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
         "parameters": {
           "conditions": {
             "options": {
@@ -385,7 +287,7 @@
             "combinator": "and",
             "conditions": [
               {
-                "id": "3c5ea392",
+                "id": "a1",
                 "leftValue": "={{ $json.skip }}",
                 "rightValue": true,
                 "operator": {
@@ -396,71 +298,45 @@
             ]
           }
         },
-        "id": "fa2e93e5",
-        "name": "Has Margins?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
         "position": [
-          1100,
+          900,
           300
-        ]
+        ],
+        "id": "21e1f2a2-e640-49d1-b259-b77c532c7d97"
       },
       {
+        "name": "Send Hint",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "parameters": {
           "method": "POST",
           "url": "http://localhost:5678/webhook/spaceship-notify",
           "sendBody": true,
-          "contentType": "json",
-          "body": "={\"title\":{{ JSON.stringify($json.title) }},\"message\":{{ JSON.stringify($json.message) }},\"severity\":\"info\"}",
+          "specifyBody": "json",
+          "jsonBody": "={\"title\":\"\ud83d\udcb9 Trading Engine\",\"message\":\"{{ $json.message }}\",\"severity\":\"info\"}",
           "options": {}
         },
-        "id": "d284b0e7",
-        "name": "Send Hint",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
         "position": [
-          1300,
-          200
-        ]
+          1120,
+          220
+        ],
+        "id": "9afc7d8c-455c-4d5b-9b79-e579c38a079a"
       },
       {
-        "parameters": {},
-        "id": "fbf420e4",
         "name": "No Market",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
+        "parameters": {},
         "position": [
-          1300,
-          400
-        ]
+          1120,
+          380
+        ],
+        "id": "5a4a3ef1-f25c-47d0-8585-269e25f4e96c"
       }
     ],
     "connections": {
       "Every 10 min": {
         "main": [
-          [
-            {
-              "node": "List Ships",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "List Ships": {
-        "main": [
-          [
-            {
-              "node": "Each Ship",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Each Ship": {
-        "main": [
-          [],
           [
             {
               "node": "Get Market",
@@ -517,10 +393,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:43:18.994Z",
-        "id": 118,
+        "createdAt": "2026-05-27T05:54:31.406Z",
+        "id": 130,
         "workflowId": "pP6uLmDqtxgBrAXA",
-        "versionId": "48221fd0-8074-4d5d-8c68-9d2c3cc24659",
+        "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:43:18.644Z",
+  "updatedAt": "2026-05-27T05:50:32.720Z",
   "createdAt": "2026-05-27T00:34:27.408Z",
   "id": "kG3Thml3Dku9DkYY",
   "name": "ST-03 Mining Controller",
@@ -193,11 +193,18 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":\"\u26cf\ufe0f Mining Controller\",\"message\":\"{{ $json.action }}: {{ $json.ship }} ({{ $json.remainMs ? Math.round($json.remainMs/1000)+\"s cooldown\" : $json.action }})\",\"severity\":\"info\"}",
+        "options": {}
+      },
       "id": "8238b29b",
       "name": "Skip",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1300,
         440
@@ -297,9 +304,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "d13535e1-5a62-4dce-8e46-e7d0e10f7246",
-  "activeVersionId": "d13535e1-5a62-4dce-8e46-e7d0e10f7246",
-  "versionCounter": 12,
+  "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
+  "activeVersionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
+  "versionCounter": 17,
   "triggerCount": 1,
   "shared": [
     {
@@ -322,9 +329,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-27T05:43:18.645Z",
-    "createdAt": "2026-05-27T05:43:18.645Z",
-    "versionId": "d13535e1-5a62-4dce-8e46-e7d0e10f7246",
+    "updatedAt": "2026-05-27T05:50:32.721Z",
+    "createdAt": "2026-05-27T05:50:32.721Z",
+    "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
     "workflowId": "kG3Thml3Dku9DkYY",
     "nodes": [
       {
@@ -513,11 +520,18 @@
         ]
       },
       {
-        "parameters": {},
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5678/webhook/spaceship-notify",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"title\":\"\u26cf\ufe0f Mining Controller\",\"message\":\"{{ $json.action }}: {{ $json.ship }} ({{ $json.remainMs ? Math.round($json.remainMs/1000)+\"s cooldown\" : $json.action }})\",\"severity\":\"info\"}",
+          "options": {}
+        },
         "id": "8238b29b",
         "name": "Skip",
-        "type": "n8n-nodes-base.noOp",
-        "typeVersion": 1,
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "position": [
           1300,
           440
@@ -613,10 +627,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-27T05:43:18.730Z",
-        "id": 116,
+        "createdAt": "2026-05-27T05:50:32.782Z",
+        "id": 124,
         "workflowId": "kG3Thml3Dku9DkYY",
-        "versionId": "d13535e1-5a62-4dce-8e46-e7d0e10f7246",
+        "versionId": "98ef155c-84f4-415b-abcd-b2cac21e8976",
         "event": "activated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
