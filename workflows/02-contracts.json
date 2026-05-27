@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T06:01:00.871Z",
+  "updatedAt": "2026-05-27T07:18:58.458Z",
   "createdAt": "2026-05-27T00:34:27.502Z",
   "id": "l4FhC5LIhNxLpeHJ",
   "name": "ST-02 Contract Manager",
@@ -249,7 +249,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": {
     "node:Every 5 min": {
@@ -260,7 +261,7 @@
   "pinData": null,
   "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
   "activeVersionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
-  "versionCounter": 34,
+  "versionCounter": 40,
   "triggerCount": 1,
   "shared": [
     {
@@ -540,6 +541,22 @@
         "workflowId": "l4FhC5LIhNxLpeHJ",
         "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:58.716Z",
+        "id": 144,
+        "workflowId": "l4FhC5LIhNxLpeHJ",
+        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:58.159Z",
+        "id": 143,
+        "workflowId": "l4FhC5LIhNxLpeHJ",
+        "versionId": "96c9d614-95f0-4eae-a977-d8e7933ebffa",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]

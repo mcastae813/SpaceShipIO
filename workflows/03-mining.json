@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T07:10:36.604Z",
+  "updatedAt": "2026-05-27T07:18:59.036Z",
   "createdAt": "2026-05-27T00:34:27.408Z",
   "id": "kG3Thml3Dku9DkYY",
   "name": "ST-03 Mining Controller",
@@ -295,7 +295,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": {
     "node:Every 2 min": {
@@ -306,7 +307,7 @@
   "pinData": null,
   "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
   "activeVersionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
-  "versionCounter": 22,
+  "versionCounter": 27,
   "triggerCount": 1,
   "shared": [
     {
@@ -632,6 +633,22 @@
         "workflowId": "kG3Thml3Dku9DkYY",
         "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:59.158Z",
+        "id": 146,
+        "workflowId": "kG3Thml3Dku9DkYY",
+        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:58.933Z",
+        "id": 145,
+        "workflowId": "kG3Thml3Dku9DkYY",
+        "versionId": "0c798c2e-0b36-4396-a45a-effe0dc93d3f",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]

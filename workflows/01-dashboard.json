@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:52:41.242Z",
+  "updatedAt": "2026-05-27T07:18:57.835Z",
   "createdAt": "2026-05-27T00:27:10.245Z",
   "id": "JJGobcDaThtvKdOj",
   "name": "ST-01 Dashboard",
@@ -191,7 +191,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": {
     "node:Every 5 min": {
@@ -202,7 +203,7 @@
   "pinData": {},
   "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
   "activeVersionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-  "versionCounter": 25,
+  "versionCounter": 32,
   "triggerCount": 1,
   "shared": [
     {
@@ -423,6 +424,22 @@
         "workflowId": "JJGobcDaThtvKdOj",
         "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:57.948Z",
+        "id": 142,
+        "workflowId": "JJGobcDaThtvKdOj",
+        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:57.795Z",
+        "id": 141,
+        "workflowId": "JJGobcDaThtvKdOj",
+        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]

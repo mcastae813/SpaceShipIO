@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T04:28:47.582Z",
+  "updatedAt": "2026-05-27T07:18:59.838Z",
   "createdAt": "2026-05-27T00:27:09.870Z",
   "id": "6Bf5ZCnuBJEJUfYb",
   "name": "ST-06 Notifier",
@@ -132,14 +132,15 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": null,
   "meta": null,
   "pinData": null,
   "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
   "activeVersionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
-  "versionCounter": 26,
+  "versionCounter": 31,
   "triggerCount": 1,
   "shared": [
     {
@@ -302,6 +303,22 @@
         "workflowId": "6Bf5ZCnuBJEJUfYb",
         "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:59.901Z",
+        "id": 152,
+        "workflowId": "6Bf5ZCnuBJEJUfYb",
+        "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:59.803Z",
+        "id": 151,
+        "workflowId": "6Bf5ZCnuBJEJUfYb",
+        "versionId": "a73b5a3a-1aae-4af8-89ee-d2b08ee58437",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]

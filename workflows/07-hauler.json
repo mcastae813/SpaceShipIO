@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T07:13:33.823Z",
+  "updatedAt": "2026-05-27T07:19:00.178Z",
   "createdAt": "2026-05-27T04:38:03.135Z",
   "id": "7iHITXOzRWYCAXVE",
   "name": "ST-07 Hauler",
@@ -887,7 +887,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": {
     "node:Every 2 min": {
@@ -898,7 +899,7 @@
   "pinData": null,
   "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
   "activeVersionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
-  "versionCounter": 63,
+  "versionCounter": 68,
   "triggerCount": 1,
   "shared": [
     {
@@ -1816,6 +1817,22 @@
         "workflowId": "7iHITXOzRWYCAXVE",
         "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:19:00.340Z",
+        "id": 154,
+        "workflowId": "7iHITXOzRWYCAXVE",
+        "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:19:00.093Z",
+        "id": 153,
+        "workflowId": "7iHITXOzRWYCAXVE",
+        "versionId": "d35cd9a4-6b20-4e33-aa43-918f04321db0",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]

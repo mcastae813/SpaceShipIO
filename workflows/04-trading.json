@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-27T05:54:31.354Z",
+  "updatedAt": "2026-05-27T07:18:59.315Z",
   "createdAt": "2026-05-27T00:34:27.622Z",
   "id": "pP6uLmDqtxgBrAXA",
   "name": "ST-04 Trading Engine",
@@ -178,7 +178,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
   },
   "staticData": {
     "node:Every 10 min": {
@@ -189,7 +190,7 @@
   "pinData": null,
   "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
   "activeVersionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
-  "versionCounter": 27,
+  "versionCounter": 32,
   "triggerCount": 1,
   "shared": [
     {
@@ -398,6 +399,22 @@
         "workflowId": "pP6uLmDqtxgBrAXA",
         "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
         "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:59.441Z",
+        "id": 148,
+        "workflowId": "pP6uLmDqtxgBrAXA",
+        "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
+        "event": "activated",
+        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
+      },
+      {
+        "createdAt": "2026-05-27T07:18:59.282Z",
+        "id": 147,
+        "workflowId": "pP6uLmDqtxgBrAXA",
+        "versionId": "45f48b4b-309a-4834-a285-656965a4dbcb",
+        "event": "deactivated",
         "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
       }
     ]
