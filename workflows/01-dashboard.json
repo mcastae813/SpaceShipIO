@@ -1,42 +1,28 @@
 {
-  "updatedAt": "2026-05-27T07:18:57.835Z",
-  "createdAt": "2026-05-27T00:27:10.245Z",
-  "id": "JJGobcDaThtvKdOj",
   "name": "ST-01 Dashboard",
-  "description": null,
   "active": true,
-  "isArchived": false,
   "nodes": [
     {
+      "id": "5301660a",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        208
+      ],
       "parameters": {
         "rule": {
           "interval": [
             {
-              "field": "minutes"
+              "field": "minutes",
+              "minutesInterval": 5
             }
           ]
         }
-      },
-      "id": "5301660a",
-      "name": "Every 5 min",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        256,
-        208
-      ]
+      }
     },
     {
-      "parameters": {
-        "url": "https://api.spacetraders.io/v2/my/agent",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "options": {
-          "response": {
-            "response": {}
-          }
-        }
-      },
       "id": "ecf410f2",
       "name": "Get Agent",
       "type": "n8n-nodes-base.httpRequest",
@@ -45,22 +31,25 @@
         480,
         208
       ],
+      "parameters": {
+        "url": "https://api.spacetraders.io/v2/my/agent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {}
+          },
+          "continueOnFail": true
+        }
+      },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
     {
-      "parameters": {
-        "url": "https://api.spacetraders.io/v2/my/ships",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "options": {
-          "response": {}
-        }
-      },
       "id": "cd733b58",
       "name": "Get Ships",
       "type": "n8n-nodes-base.httpRequest",
@@ -69,22 +58,23 @@
         704,
         208
       ],
+      "parameters": {
+        "url": "https://api.spacetraders.io/v2/my/ships",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {},
+          "continueOnFail": true
+        }
+      },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
     {
-      "parameters": {
-        "url": "https://api.spacetraders.io/v2/my/contracts",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "options": {
-          "response": {}
-        }
-      },
       "id": "a7d955d7",
       "name": "Get Contracts",
       "type": "n8n-nodes-base.httpRequest",
@@ -93,17 +83,23 @@
         928,
         208
       ],
+      "parameters": {
+        "url": "https://api.spacetraders.io/v2/my/contracts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {},
+          "continueOnFail": true
+        }
+      },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
     {
-      "parameters": {
-        "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst agent     = $('Get Agent').first().json.data;\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\n\nconst credits = agent.credits || 0;\nconst lastCredits = staticData.lastCredits;\n\n// Only send if credits changed (or first ever run)\nif (lastCredits !== undefined && lastCredits === credits) {\n  return [];\n}\nstaticData.lastCredits = credits;\n\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst diff   = lastCredits !== undefined ? credits - lastCredits : null;\nconst diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString()})` : ` (${diff.toLocaleString()})`) : '';\n\nconst text = `\ud83d\ude80 <b>HERMES-FLEET Dashboard</b>\n\ud83d\udcb0 Credits: ${credits.toLocaleString()}${diffStr}\n\ud83d\udea2 Ships: ${ships.length}\n\ud83d\udccb Active contracts: ${active}\n\ud83d\udccd HQ: ${agent.headquarters}`;\n\nreturn [{json: {text}}];\n"
-      },
       "id": "838234df",
       "name": "Format",
       "type": "n8n-nodes-base.code",
@@ -111,17 +107,12 @@
       "position": [
         1152,
         208
-      ]
+      ],
+      "parameters": {
+        "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst agent     = $('Get Agent').first().json.data;\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\n\nconst credits = agent.credits || 0;\nconst lastCredits = staticData.lastCredits;\n\n// Only send if credits changed (or first ever run)\nif (lastCredits !== undefined && lastCredits === credits) {\n  return [];\n}\nstaticData.lastCredits = credits;\n\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst diff   = lastCredits !== undefined ? credits - lastCredits : null;\nconst diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString()})` : ` (${diff.toLocaleString()})`) : '';\n\nconst text = `🚀 <b>HERMES-FLEET Dashboard</b>\n💰 Credits: ${credits.toLocaleString()}${diffStr}\n🚢 Ships: ${ships.length}\n📋 Active contracts: ${active}\n📍 HQ: ${agent.headquarters}`;\n\nreturn [{json: {text}}];\n"
+      }
     },
     {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":{{ JSON.stringify($json.text) }},\"parse_mode\":\"HTML\"}",
-        "options": {}
-      },
       "id": "177b2319",
       "name": "Send Telegram",
       "type": "n8n-nodes-base.httpRequest",
@@ -129,7 +120,17 @@
       "position": [
         1376,
         208
-      ]
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\":\"7603833558\",\"text\":$json.text,\"parse_mode\":\"HTML\"}) }}",
+        "options": {
+          "continueOnFail": true
+        }
+      }
     }
   ],
   "connections": {
@@ -193,255 +194,5 @@
     "executionOrder": "v1",
     "binaryMode": "separate",
     "errorWorkflow": "UBBtoeMsOM2deZTM"
-  },
-  "staticData": {
-    "node:Every 5 min": {
-      "recurrenceRules": []
-    }
-  },
-  "meta": null,
-  "pinData": {},
-  "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-  "activeVersionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-  "versionCounter": 32,
-  "triggerCount": 1,
-  "shared": [
-    {
-      "updatedAt": "2026-05-27T00:27:10.268Z",
-      "createdAt": "2026-05-27T00:27:10.268Z",
-      "role": "workflow:owner",
-      "workflowId": "JJGobcDaThtvKdOj",
-      "projectId": "pQ9yqqsBtuSGk44p",
-      "project": {
-        "updatedAt": "2026-01-15T01:26:38.562Z",
-        "createdAt": "2026-01-15T01:25:22.740Z",
-        "id": "pQ9yqqsBtuSGk44p",
-        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": {
-    "updatedAt": "2026-05-27T04:52:41.243Z",
-    "createdAt": "2026-05-27T04:52:41.243Z",
-    "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-    "workflowId": "JJGobcDaThtvKdOj",
-    "nodes": [
-      {
-        "parameters": {
-          "rule": {
-            "interval": [
-              {
-                "field": "minutes"
-              }
-            ]
-          }
-        },
-        "id": "5301660a",
-        "name": "Every 5 min",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.1,
-        "position": [
-          256,
-          208
-        ]
-      },
-      {
-        "parameters": {
-          "url": "https://api.spacetraders.io/v2/my/agent",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "options": {
-            "response": {
-              "response": {}
-            }
-          }
-        },
-        "id": "ecf410f2",
-        "name": "Get Agent",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          480,
-          208
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "url": "https://api.spacetraders.io/v2/my/ships",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "options": {
-            "response": {}
-          }
-        },
-        "id": "cd733b58",
-        "name": "Get Ships",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          704,
-          208
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "url": "https://api.spacetraders.io/v2/my/contracts",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "options": {
-            "response": {}
-          }
-        },
-        "id": "a7d955d7",
-        "name": "Get Contracts",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          928,
-          208
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst staticData = $getWorkflowStaticData('global');\nconst agent     = $('Get Agent').first().json.data;\nconst ships     = $('Get Ships').first().json.data || [];\nconst contracts = $('Get Contracts').first().json.data || [];\n\nconst credits = agent.credits || 0;\nconst lastCredits = staticData.lastCredits;\n\n// Only send if credits changed (or first ever run)\nif (lastCredits !== undefined && lastCredits === credits) {\n  return [];\n}\nstaticData.lastCredits = credits;\n\nconst active = contracts.filter(c => !c.fulfilled).length;\nconst diff   = lastCredits !== undefined ? credits - lastCredits : null;\nconst diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString()})` : ` (${diff.toLocaleString()})`) : '';\n\nconst text = `\ud83d\ude80 <b>HERMES-FLEET Dashboard</b>\n\ud83d\udcb0 Credits: ${credits.toLocaleString()}${diffStr}\n\ud83d\udea2 Ships: ${ships.length}\n\ud83d\udccb Active contracts: ${active}\n\ud83d\udccd HQ: ${agent.headquarters}`;\n\nreturn [{json: {text}}];\n"
-        },
-        "id": "838234df",
-        "name": "Format",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1152,
-          208
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.telegram.org/bot8983287190:AAGm8Zc1dC5FfLgtJKc2FfnX_AeplMqL56c/sendMessage",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"chat_id\":\"7603833558\",\"text\":{{ JSON.stringify($json.text) }},\"parse_mode\":\"HTML\"}",
-          "options": {}
-        },
-        "id": "177b2319",
-        "name": "Send Telegram",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1376,
-          208
-        ]
-      }
-    ],
-    "connections": {
-      "Every 5 min": {
-        "main": [
-          [
-            {
-              "node": "Get Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Agent": {
-        "main": [
-          [
-            {
-              "node": "Get Ships",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Ships": {
-        "main": [
-          [
-            {
-              "node": "Get Contracts",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Contracts": {
-        "main": [
-          [
-            {
-              "node": "Format",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Format": {
-        "main": [
-          [
-            {
-              "node": "Send Telegram",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Martin Castaneda",
-    "name": null,
-    "description": null,
-    "autosaved": false,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-05-27T04:52:41.319Z",
-        "id": 106,
-        "workflowId": "JJGobcDaThtvKdOj",
-        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:57.948Z",
-        "id": 142,
-        "workflowId": "JJGobcDaThtvKdOj",
-        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:57.795Z",
-        "id": 141,
-        "workflowId": "JJGobcDaThtvKdOj",
-        "versionId": "53e45989-7360-4da6-a208-ea44a798c18b",
-        "event": "deactivated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    ]
   }
 }

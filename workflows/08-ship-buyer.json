@@ -1,11 +1,6 @@
 {
-  "updatedAt": "2026-05-27T15:40:36.278Z",
-  "createdAt": "2026-05-27T15:03:59.698Z",
-  "id": "QLLz8mSf120TQqW9",
   "name": "ST-08 Ship Buyer",
-  "description": null,
   "active": true,
-  "isArchived": false,
   "nodes": [
     {
       "id": "7c7e14d6-51fc-40dc-bced-a66dc2edb3e5",
@@ -40,14 +35,19 @@
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/agent",
         "authentication": "predefinedCredentialType",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "nodeCredentialType": "httpHeaderAuth",
-        "alwaysOutputData": true
+        "alwaysOutputData": true,
+        "continueOnFail": true
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -64,14 +64,19 @@
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/ships",
         "authentication": "predefinedCredentialType",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "nodeCredentialType": "httpHeaderAuth",
-        "alwaysOutputData": true
+        "alwaysOutputData": true,
+        "continueOnFail": true
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -99,18 +104,29 @@
       ],
       "parameters": {
         "method": "GET",
-        "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-H53/shipyard",
+        "url": "https://api.spacetraders.io/v2/systems/X1-HC40/waypoints/X1-HC40-H50/shipyard",
         "authentication": "predefinedCredentialType",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
         "nodeCredentialType": "httpHeaderAuth",
-        "alwaysOutputData": true
+        "alwaysOutputData": true,
+        "continueOnFail": true
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "id": "b3de9e2e-15a8-4d3a-bf1e-09d862ed663b",
@@ -122,7 +138,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "\nconst {budget} = $('Check Fleet').first().json;\nconst shipyard = $input.first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
+        "jsCode": "const MIN_CAP_FOR_TRAVEL = 150;\n\nconst budgetObj = $('Check Fleet').first().json;\nif (!budgetObj || !budgetObj.budget) return [];\nconst budget = budgetObj.budget;\n\n// Guard: handle empty or errored shipyard response\nconst shipyardRaw = $input.first().json;\nif (!shipyardRaw || shipyardRaw.error || !shipyardRaw.data) {\n  console.log('SHIPYARD_ERROR: no data, skipping purchase');\n  return [];\n}\n\nconst shipyard = shipyardRaw.data || {};\n\n// API returns shipTypes (not ships) with only type field, no prices\nconst shipTypes = shipyard.shipTypes || [];\nif (shipTypes.length === 0) return [];\n\n// Known ship prices (SpaceTraders fixed prices)\nconst SHIP_PRICES = {\n  \"SHIP_MINING_DRONE\": 42931,\n  \"SHIP_SURVEYOR\": 28666,\n  \"SHIP_LIGHT_SHUTTLE\": 100000,\n  \"SHIP_LIGHT_HAULER\": 100000,\n  \"SHIP_PROBE\": 50000,\n  \"SHIP_SIPHON_DRONE\": 38666,\n};\n\n// Filter for mining ships\nconst miningTypes = shipTypes.filter(st => {\n  const t = st.type || '';\n  return t.includes('MINING') || t.includes('SURVEYOR') || t.includes('SIPHON');\n});\n\nif (miningTypes.length === 0) return [];\n\n// Sort by price\nminingTypes.sort((a, b) => (SHIP_PRICES[a.type] || 999999) - (SHIP_PRICES[b.type] || 999999));\n\nconst best = miningTypes.find(st => (SHIP_PRICES[st.type] || 999999) <= budget);\nif (!best) return [];\n\n// Extract waypoint from shipyard response\nconst SHIPYARD_WP = shipyard.symbol || 'X1-HC40-H50';\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: SHIP_PRICES[best.type] || 0,\n  budget,\n}}];"
       }
     },
     {
@@ -141,14 +157,19 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"shipType\":\"{{ $json.shipType }}\",\"waypointSymbol\":\"{{ $json.waypointSymbol }}\"}",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "nodeCredentialType": "httpHeaderAuth",
-        "alwaysOutputData": true
+        "alwaysOutputData": true,
+        "continueOnFail": true
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -167,7 +188,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"title\":\"New ship purchased!\",\"message\":\"{{ $json.data.ship.symbol }} ({{ $json.data.ship.frame.symbol }}) bought for {{ $('Select Ship').first().json.price }} cr. Credits remaining: {{ $json.data.agent.credits }}\",\"severity\":\"info\"}",
-        "options": {}
+        "options": {
+          "continueOnFail": true
+        }
       }
     }
   ],
@@ -253,300 +276,5 @@
   "settings": {
     "executionOrder": "v1",
     "errorWorkflow": "UBBtoeMsOM2deZTM"
-  },
-  "staticData": {
-    "node:Every 10 min": {
-      "recurrenceRules": []
-    }
-  },
-  "meta": null,
-  "pinData": null,
-  "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
-  "activeVersionId": "4210079e-1165-4148-ad1c-713062664f8b",
-  "versionCounter": 19,
-  "triggerCount": 1,
-  "shared": [
-    {
-      "updatedAt": "2026-05-27T15:03:59.707Z",
-      "createdAt": "2026-05-27T15:03:59.707Z",
-      "role": "workflow:owner",
-      "workflowId": "QLLz8mSf120TQqW9",
-      "projectId": "pQ9yqqsBtuSGk44p",
-      "project": {
-        "updatedAt": "2026-01-15T01:26:38.562Z",
-        "createdAt": "2026-01-15T01:25:22.740Z",
-        "id": "pQ9yqqsBtuSGk44p",
-        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": {
-    "updatedAt": "2026-05-27T15:40:36.281Z",
-    "createdAt": "2026-05-27T15:40:36.281Z",
-    "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
-    "workflowId": "QLLz8mSf120TQqW9",
-    "nodes": [
-      {
-        "id": "7c7e14d6-51fc-40dc-bced-a66dc2edb3e5",
-        "name": "Every 10 min",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.2,
-        "position": [
-          0,
-          0
-        ],
-        "parameters": {
-          "rule": {
-            "interval": [
-              {
-                "field": "minutes",
-                "minutesInterval": 10
-              }
-            ]
-          }
-        }
-      },
-      {
-        "id": "63a26337-ea09-456a-990a-b85071320abb",
-        "name": "Get Agent",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          220,
-          0
-        ],
-        "parameters": {
-          "method": "GET",
-          "url": "https://api.spacetraders.io/v2/my/agent",
-          "authentication": "predefinedCredentialType",
-          "options": {},
-          "nodeCredentialType": "httpHeaderAuth",
-          "alwaysOutputData": true
-        },
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "id": "af0a18d4-1882-4e0e-9bc8-a4ef4f5763a1",
-        "name": "Get Ships",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          440,
-          0
-        ],
-        "parameters": {
-          "method": "GET",
-          "url": "https://api.spacetraders.io/v2/my/ships",
-          "authentication": "predefinedCredentialType",
-          "options": {},
-          "nodeCredentialType": "httpHeaderAuth",
-          "alwaysOutputData": true
-        },
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "id": "eecdc9fb-472c-4200-80e0-2acf2362389f",
-        "name": "Check Fleet",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          660,
-          0
-        ],
-        "parameters": {
-          "jsCode": "const agentData = $('Get Agent').first().json.data;\nconst shipsData = $('Get Ships').first().json.data || [];\n\nconst credits = agentData.credits;\nconst SAFETY_BUFFER = 75000;\nconst MAX_ACTIVE_SHIPS = 5;\n\n// Count ships that do real work (exclude probes/satellites)\nconst activeShips = shipsData.filter(s => {\n  const frame = s.frame?.symbol || '';\n  return !frame.includes('PROBE') && !frame.includes('SATELLITE');\n});\n\nif (activeShips.length >= MAX_ACTIVE_SHIPS) return [];\nif (credits < SAFETY_BUFFER * 2) return [];\n\nconst budget = credits - SAFETY_BUFFER;\nreturn [{json: {credits, budget, activeShipCount: activeShips.length}}];\n"
-        }
-      },
-      {
-        "id": "527f68ea-e8a9-418f-ba4d-d853f99aa51f",
-        "name": "Get Shipyard",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          880,
-          0
-        ],
-        "parameters": {
-          "method": "GET",
-          "url": "https://api.spacetraders.io/v2/systems/X1-UX96/waypoints/X1-UX96-H53/shipyard",
-          "authentication": "predefinedCredentialType",
-          "options": {},
-          "nodeCredentialType": "httpHeaderAuth",
-          "alwaysOutputData": true
-        },
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "id": "b3de9e2e-15a8-4d3a-bf1e-09d862ed663b",
-        "name": "Select Ship",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1100,
-          0
-        ],
-        "parameters": {
-          "jsCode": "\nconst {budget} = $('Check Fleet').first().json;\nconst shipyard = $input.first().json.data || {};\nconst ships = shipyard.ships || [];\n\nconst SHIPYARD_WP = 'X1-UX96-H53';\n\nconst miningShips = ships.filter(s => {\n  const hasMiningMount = (s.mounts || []).some(m => m.symbol?.includes('MINING_LASER'));\n  const isMiningType = (s.type || '').includes('MINING');\n  return hasMiningMount || isMiningType;\n});\n\nif (miningShips.length === 0) return [];\n\nminingShips.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0));\n\nconst best = miningShips.find(s => (s.purchasePrice || 0) <= budget);\nif (!best) return [];\n\nreturn [{json: {\n  shipType: best.type,\n  waypointSymbol: SHIPYARD_WP,\n  price: best.purchasePrice,\n  budget,\n}}];\n"
-        }
-      },
-      {
-        "id": "44432d5a-a07f-4e24-bb79-4e367962898c",
-        "name": "Buy Ship",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1320,
-          0
-        ],
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.spacetraders.io/v2/my/ships",
-          "authentication": "predefinedCredentialType",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"shipType\":\"{{ $json.shipType }}\",\"waypointSymbol\":\"{{ $json.waypointSymbol }}\"}",
-          "options": {},
-          "nodeCredentialType": "httpHeaderAuth",
-          "alwaysOutputData": true
-        },
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "id": "bbb42e7c-df0f-46a1-885b-1a5b2b392047",
-        "name": "Notify Purchase",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1540,
-          0
-        ],
-        "parameters": {
-          "method": "POST",
-          "url": "http://localhost:5678/webhook/spaceship-notify",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"title\":\"New ship purchased!\",\"message\":\"{{ $json.data.ship.symbol }} ({{ $json.data.ship.frame.symbol }}) bought for {{ $('Select Ship').first().json.price }} cr. Credits remaining: {{ $json.data.agent.credits }}\",\"severity\":\"info\"}",
-          "options": {}
-        }
-      }
-    ],
-    "connections": {
-      "Every 10 min": {
-        "main": [
-          [
-            {
-              "node": "Get Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Agent": {
-        "main": [
-          [
-            {
-              "node": "Get Ships",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Ships": {
-        "main": [
-          [
-            {
-              "node": "Check Fleet",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Check Fleet": {
-        "main": [
-          [
-            {
-              "node": "Get Shipyard",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Shipyard": {
-        "main": [
-          [
-            {
-              "node": "Select Ship",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Select Ship": {
-        "main": [
-          [
-            {
-              "node": "Buy Ship",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Buy Ship": {
-        "main": [
-          [
-            {
-              "node": "Notify Purchase",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Martin Castaneda",
-    "name": null,
-    "description": null,
-    "autosaved": false,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-05-27T15:40:36.364Z",
-        "id": 176,
-        "workflowId": "QLLz8mSf120TQqW9",
-        "versionId": "4210079e-1165-4148-ad1c-713062664f8b",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    ]
   }
 }

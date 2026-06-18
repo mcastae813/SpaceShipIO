@@ -1,11 +1,6 @@
 {
-  "updatedAt": "2026-05-27T17:55:35.318Z",
-  "createdAt": "2026-05-27T07:18:57.541Z",
-  "id": "UBBtoeMsOM2deZTM",
   "name": "ST-00 Error Handler",
-  "description": null,
   "active": true,
-  "isArchived": false,
   "nodes": [
     {
       "name": "Error Trigger",
@@ -19,14 +14,27 @@
       "id": "9506b76d-5fec-40f6-922c-275b3ff4a807"
     },
     {
+      "name": "Dedup Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst wfId = (d.workflow?.id || 'unknown');\nconst lastNode = (d.execution?.lastNodeExecuted || 'unknown');\nconst key = `${wfId}|${lastNode}`;\n\nif (staticData.lastErrorKey === key) {\n  const lastTime = staticData.lastErrorTime || 0;\n  const now = Date.now();\n  if (now - lastTime < 300000) return []; // 5 min cooldown per workflow+node\n}\n\nstaticData.lastErrorKey = key;\nstaticData.lastErrorTime = Date.now();\nreturn [$input.first()];"
+      },
+      "position": [
+        460,
+        300
+      ],
+      "id": "dedup-check-001"
+    },
+    {
       "name": "Format Error",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "parameters": {
-        "jsCode": "\nconst d = $input.first().json;\nconst wfName  = (d.workflow?.name  || 'Unknown workflow');\nconst wfId    = (d.workflow?.id    || '');\nconst errMsg  = (d.execution?.error?.message || 'Unknown error').substring(0, 200);\nconst lastNode = (d.execution?.lastNodeExecuted || 'unknown node');\nconst execId  = (d.execution?.id   || '');\n\n// Sanitize: remove chars that break double-quoted shell args\nfunction san(s, maxLen) {\n  return String(s)\n    .replace(/\\n|\\r/g, ' | ')\n    .replace(/\"/g, \"'\")\n    .replace(/`/g, \"'\")\n    .replace(/\\$/g, 'S')\n    .replace(/\\\\/g, '/')\n    .substring(0, maxLen || 300);\n}\n\nconst taskTitle  = san(`SpaceShipIO: ${wfName} failed`, 80);\nconst taskBody   = san(\n  `Workflow: ${wfName}\\n` +\n  `Execution: ${execId}\\n` +\n  `Failed at: ${lastNode}\\n\\n` +\n  `Error: ${errMsg}\\n\\n` +\n  `n8n: http://192.168.40.15:5678/workflow/${wfId}/executions`\n);\nconst idemKey = san(`spaceship-error-${wfId}`, 60);\n\nreturn [{json: {\n  wfName,\n  errMsg: san(errMsg, 150),\n  lastNode: san(lastNode, 50),\n  taskTitle,\n  taskBody,\n  idemKey\n}}];\n"
+        "jsCode": "const d = $input.first().json;\nconst wfName  = (d.workflow?.name  || 'Unknown workflow');\nconst wfId    = (d.workflow?.id    || '');\nconst errMsg  = (d.execution?.error?.message || 'Unknown error').substring(0, 200);\nconst lastNode = (d.execution?.lastNodeExecuted || 'unknown node');\nconst execId  = (d.execution?.id   || '');\n\nreturn [{json: {\n  wfName,\n  errMsg: errMsg.substring(0, 150),\n  lastNode: lastNode.substring(0, 50),\n  taskTitle: `SpaceShipIO: ${wfName} failed`,\n  taskBody: `Workflow: ${wfName}\\nExecution: ${execId}\\nFailed at: ${lastNode}\\n\\nError: ${errMsg}`,\n  idemKey: `spaceship-err-${wfId}`\n}}];"
       },
       "position": [
-        460,
+        680,
         300
       ],
       "id": "ff7a9100-fe50-435d-81b1-cd48303ff055"
@@ -40,37 +48,30 @@
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"title\":\"SpaceShipIO Error\",\"message\":\"\u274c {{ $json.wfName }} \u2014 {{ $json.lastNode }}: {{ $json.errMsg }}\",\"severity\":\"error\"}",
+        "jsonBody": "={ \"title\": \"SpaceShipIO Error\", \"message\": \"❌ {{ $json.wfName }} — {{ $json.lastNode }}: {{ $json.errMsg }}\", \"severity\": \"error\" }",
+        "continueOnFail": true,
         "options": {}
       },
       "position": [
-        680,
+        900,
         200
       ],
       "id": "e413fe67-6548-448d-aa9a-2fa1dc062b51"
-    },
-    {
-      "name": "Create Kanban Task",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:9120/kanban/create",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"title\":\"{{ $json.taskTitle }}\",\"body\":\"{{ $json.taskBody }}\",\"idempotencyKey\":\"{{ $json.idemKey }}\"}",
-        "options": {},
-        "body": "={\"title\":{{ JSON.stringify($json.taskTitle) }},\"body\":{{ JSON.stringify($json.taskBody) }},\"idempotencyKey\":{{ JSON.stringify($json.idemKey) }}}"
-      },
-      "position": [
-        680,
-        400
-      ],
-      "id": "9c3f3ef0-93a0-4c1e-a96b-940d6ffd729d"
     }
   ],
   "connections": {
     "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup Check": {
       "main": [
         [
           {
@@ -88,11 +89,6 @@
             "node": "Notify",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Create Kanban Task",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -100,144 +96,5 @@
   },
   "settings": {
     "executionOrder": "v1"
-  },
-  "staticData": null,
-  "meta": null,
-  "pinData": null,
-  "versionId": "e8ad64a0-5abc-4f4b-8014-2fead2992b45",
-  "activeVersionId": "e8ad64a0-5abc-4f4b-8014-2fead2992b45",
-  "versionCounter": 8,
-  "triggerCount": 0,
-  "shared": [
-    {
-      "updatedAt": "2026-05-27T07:18:57.545Z",
-      "createdAt": "2026-05-27T07:18:57.545Z",
-      "role": "workflow:owner",
-      "workflowId": "UBBtoeMsOM2deZTM",
-      "projectId": "pQ9yqqsBtuSGk44p",
-      "project": {
-        "updatedAt": "2026-01-15T01:26:38.562Z",
-        "createdAt": "2026-01-15T01:25:22.740Z",
-        "id": "pQ9yqqsBtuSGk44p",
-        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": {
-    "updatedAt": "2026-05-27T17:55:35.320Z",
-    "createdAt": "2026-05-27T17:55:35.320Z",
-    "versionId": "e8ad64a0-5abc-4f4b-8014-2fead2992b45",
-    "workflowId": "UBBtoeMsOM2deZTM",
-    "nodes": [
-      {
-        "name": "Error Trigger",
-        "type": "n8n-nodes-base.errorTrigger",
-        "typeVersion": 1,
-        "parameters": {},
-        "position": [
-          240,
-          300
-        ],
-        "id": "9506b76d-5fec-40f6-922c-275b3ff4a807"
-      },
-      {
-        "name": "Format Error",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "parameters": {
-          "jsCode": "\nconst d = $input.first().json;\nconst wfName  = (d.workflow?.name  || 'Unknown workflow');\nconst wfId    = (d.workflow?.id    || '');\nconst errMsg  = (d.execution?.error?.message || 'Unknown error').substring(0, 200);\nconst lastNode = (d.execution?.lastNodeExecuted || 'unknown node');\nconst execId  = (d.execution?.id   || '');\n\n// Sanitize: remove chars that break double-quoted shell args\nfunction san(s, maxLen) {\n  return String(s)\n    .replace(/\\n|\\r/g, ' | ')\n    .replace(/\"/g, \"'\")\n    .replace(/`/g, \"'\")\n    .replace(/\\$/g, 'S')\n    .replace(/\\\\/g, '/')\n    .substring(0, maxLen || 300);\n}\n\nconst taskTitle  = san(`SpaceShipIO: ${wfName} failed`, 80);\nconst taskBody   = san(\n  `Workflow: ${wfName}\\n` +\n  `Execution: ${execId}\\n` +\n  `Failed at: ${lastNode}\\n\\n` +\n  `Error: ${errMsg}\\n\\n` +\n  `n8n: http://192.168.40.15:5678/workflow/${wfId}/executions`\n);\nconst idemKey = san(`spaceship-error-${wfId}`, 60);\n\nreturn [{json: {\n  wfName,\n  errMsg: san(errMsg, 150),\n  lastNode: san(lastNode, 50),\n  taskTitle,\n  taskBody,\n  idemKey\n}}];\n"
-        },
-        "position": [
-          460,
-          300
-        ],
-        "id": "ff7a9100-fe50-435d-81b1-cd48303ff055"
-      },
-      {
-        "name": "Notify",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "parameters": {
-          "method": "POST",
-          "url": "http://localhost:5678/webhook/spaceship-notify",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"title\":\"SpaceShipIO Error\",\"message\":\"\u274c {{ $json.wfName }} \u2014 {{ $json.lastNode }}: {{ $json.errMsg }}\",\"severity\":\"error\"}",
-          "options": {}
-        },
-        "position": [
-          680,
-          200
-        ],
-        "id": "e413fe67-6548-448d-aa9a-2fa1dc062b51"
-      },
-      {
-        "name": "Create Kanban Task",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "parameters": {
-          "method": "POST",
-          "url": "http://localhost:9120/kanban/create",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"title\":\"{{ $json.taskTitle }}\",\"body\":\"{{ $json.taskBody }}\",\"idempotencyKey\":\"{{ $json.idemKey }}\"}",
-          "options": {},
-          "body": "={\"title\":{{ JSON.stringify($json.taskTitle) }},\"body\":{{ JSON.stringify($json.taskBody) }},\"idempotencyKey\":{{ JSON.stringify($json.idemKey) }}}"
-        },
-        "position": [
-          680,
-          400
-        ],
-        "id": "9c3f3ef0-93a0-4c1e-a96b-940d6ffd729d"
-      }
-    ],
-    "connections": {
-      "Error Trigger": {
-        "main": [
-          [
-            {
-              "node": "Format Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Format Error": {
-        "main": [
-          [
-            {
-              "node": "Notify",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Create Kanban Task",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Martin Castaneda",
-    "name": null,
-    "description": null,
-    "autosaved": false,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-05-27T17:55:35.375Z",
-        "id": 178,
-        "workflowId": "UBBtoeMsOM2deZTM",
-        "versionId": "e8ad64a0-5abc-4f4b-8014-2fead2992b45",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    ]
   }
 }

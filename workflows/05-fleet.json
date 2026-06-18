@@ -1,11 +1,6 @@
 {
-  "updatedAt": "2026-05-27T07:18:59.604Z",
-  "createdAt": "2026-05-27T00:27:10.602Z",
-  "id": "Vb1VCWThIkn9nZZJ",
   "name": "ST-05 Fleet Commander",
-  "description": null,
   "active": true,
-  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -21,7 +16,7 @@
       "id": "821887fc",
       "name": "Every 2 min",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
+      "typeVersion": 1.2,
       "position": [
         100,
         300
@@ -31,10 +26,15 @@
       "parameters": {
         "method": "GET",
         "url": "https://api.spacetraders.io/v2/my/ships",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
-        "alwaysOutputData": true
+        "alwaysOutputData": true,
+        "continueOnFail": true
       },
       "id": "4ab23f95",
       "name": "List Ships",
@@ -46,8 +46,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -154,7 +154,11 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/refuel",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "continueOnFail": true,
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth"
@@ -169,8 +173,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -178,7 +182,11 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/orbit",
-        "options": {},
+        "options": {
+          "retries": 3,
+          "retryDelay": 2000,
+          "continueOnFail": true
+        },
         "continueOnFail": true,
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth"
@@ -193,8 +201,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "56bs6PUHWdbliMlu",
-          "name": "SpaceTraders Auth"
+          "id": "MkEhJ2cBA7uR8icv",
+          "name": "HERMES-OMEGA Auth"
         }
       }
     },
@@ -204,8 +212,10 @@
         "url": "http://localhost:5678/webhook/spaceship-notify",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"title\":\"\ud83d\ude80 Fleet Commander\",\"message\":\"{{ $json.ship }}: {{ $json.action }}\",\"severity\":\"info\"}",
-        "options": {}
+        "jsonBody": "={\"title\":\"🚀 Fleet Commander\",\"message\":\"{{ $json.ship }}: {{ $json.action }}\",\"severity\":\"info\"}",
+        "options": {
+          "continueOnFail": true
+        }
       },
       "id": "73f2086b",
       "name": "Skip",
@@ -303,366 +313,5 @@
   "settings": {
     "executionOrder": "v1",
     "errorWorkflow": "UBBtoeMsOM2deZTM"
-  },
-  "staticData": {
-    "node:Every 2 min": {
-      "recurrenceRules": []
-    }
-  },
-  "meta": null,
-  "pinData": null,
-  "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-  "activeVersionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-  "versionCounter": 27,
-  "triggerCount": 1,
-  "shared": [
-    {
-      "updatedAt": "2026-05-27T00:27:10.605Z",
-      "createdAt": "2026-05-27T00:27:10.605Z",
-      "role": "workflow:owner",
-      "workflowId": "Vb1VCWThIkn9nZZJ",
-      "projectId": "pQ9yqqsBtuSGk44p",
-      "project": {
-        "updatedAt": "2026-01-15T01:26:38.562Z",
-        "createdAt": "2026-01-15T01:25:22.740Z",
-        "id": "pQ9yqqsBtuSGk44p",
-        "name": "Martin Castaneda <martinjosecastaneda1@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": {
-    "updatedAt": "2026-05-27T05:50:32.955Z",
-    "createdAt": "2026-05-27T05:50:32.955Z",
-    "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-    "workflowId": "Vb1VCWThIkn9nZZJ",
-    "nodes": [
-      {
-        "parameters": {
-          "rule": {
-            "interval": [
-              {
-                "field": "minutes",
-                "minutesInterval": 2
-              }
-            ]
-          }
-        },
-        "id": "821887fc",
-        "name": "Every 2 min",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.1,
-        "position": [
-          100,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "method": "GET",
-          "url": "https://api.spacetraders.io/v2/my/ships",
-          "options": {},
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth",
-          "alwaysOutputData": true
-        },
-        "id": "4ab23f95",
-        "name": "List Ships",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          300,
-          300
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst d = $input.first().json;\nconst ships = Array.isArray(d.data) ? d.data : (Array.isArray(d) ? d : []);\nreturn ships.map(s => ({json: s}));\n"
-        },
-        "id": "0d14f90d",
-        "name": "Unpack Ships",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          500,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "batchSize": 1,
-          "options": {}
-        },
-        "id": "197b346c",
-        "name": "Each Ship",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 3,
-        "position": [
-          700,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst s = $input.first().json;\nconst fuelPct = s.fuel?.capacity > 0 ? s.fuel.current / s.fuel.capacity : 1;\nconst status = s.nav?.status;\nconst arrival = new Date(s.nav?.route?.arrival).getTime();\nconst now = Date.now();\nif (status === 'IN_TRANSIT' && now < arrival) return [{json:{ship:s.symbol, action:'skip'}}];\nif (!s.fuel?.capacity) return [{json:{ship:s.symbol, action:'skip'}}]; // probe\nif (status === 'DOCKED' && fuelPct < 0.20) return [{json:{ship:s.symbol, action:'refuel'}}];\nif (status === 'DOCKED') return [{json:{ship:s.symbol, action:'orbit'}}];\nreturn [{json:{ship:s.symbol, action:'skip'}}];\n"
-        },
-        "id": "c90ded08",
-        "name": "Decide",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          900,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "mode": "rules",
-          "rules": {
-            "values": [
-              {
-                "conditions": {
-                  "options": {
-                    "caseSensitive": true
-                  },
-                  "combinator": "and",
-                  "conditions": [
-                    {
-                      "id": "4c11ed06",
-                      "leftValue": "={{ $json.action }}",
-                      "rightValue": "refuel",
-                      "operator": {
-                        "type": "string",
-                        "operation": "equals"
-                      }
-                    }
-                  ]
-                },
-                "renameOutput": false
-              },
-              {
-                "conditions": {
-                  "options": {
-                    "caseSensitive": true
-                  },
-                  "combinator": "and",
-                  "conditions": [
-                    {
-                      "id": "0d8e0e60",
-                      "leftValue": "={{ $json.action }}",
-                      "rightValue": "orbit",
-                      "operator": {
-                        "type": "string",
-                        "operation": "equals"
-                      }
-                    }
-                  ]
-                },
-                "renameOutput": false
-              }
-            ]
-          },
-          "fallbackOutput": "extra",
-          "options": {}
-        },
-        "id": "5c45fa1d",
-        "name": "Switch",
-        "type": "n8n-nodes-base.switch",
-        "typeVersion": 3.2,
-        "position": [
-          1100,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/refuel",
-          "options": {},
-          "continueOnFail": true,
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth"
-        },
-        "id": "ed10d0dc",
-        "name": "Refuel",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1300,
-          200
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/orbit",
-          "options": {},
-          "continueOnFail": true,
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpHeaderAuth"
-        },
-        "id": "dae49e5b",
-        "name": "Orbit",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1300,
-          340
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "56bs6PUHWdbliMlu",
-            "name": "SpaceTraders Auth"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "http://localhost:5678/webhook/spaceship-notify",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\"title\":\"\ud83d\ude80 Fleet Commander\",\"message\":\"{{ $json.ship }}: {{ $json.action }}\",\"severity\":\"info\"}",
-          "options": {}
-        },
-        "id": "73f2086b",
-        "name": "Skip",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1300,
-          480
-        ]
-      }
-    ],
-    "connections": {
-      "Every 2 min": {
-        "main": [
-          [
-            {
-              "node": "List Ships",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "List Ships": {
-        "main": [
-          [
-            {
-              "node": "Unpack Ships",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Unpack Ships": {
-        "main": [
-          [
-            {
-              "node": "Each Ship",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Each Ship": {
-        "main": [
-          [],
-          [
-            {
-              "node": "Decide",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Decide": {
-        "main": [
-          [
-            {
-              "node": "Switch",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Switch": {
-        "main": [
-          [
-            {
-              "node": "Refuel",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Orbit",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Skip",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Martin Castaneda",
-    "name": null,
-    "description": null,
-    "autosaved": false,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-05-27T05:50:33.197Z",
-        "id": 126,
-        "workflowId": "Vb1VCWThIkn9nZZJ",
-        "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:59.690Z",
-        "id": 150,
-        "workflowId": "Vb1VCWThIkn9nZZJ",
-        "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-        "event": "activated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      },
-      {
-        "createdAt": "2026-05-27T07:18:59.565Z",
-        "id": 149,
-        "workflowId": "Vb1VCWThIkn9nZZJ",
-        "versionId": "a94d3d89-e92d-4369-ab3e-64ceb4ebc40b",
-        "event": "deactivated",
-        "userId": "57a0ed57-85ea-48e0-a5d9-21b1a9cc107c"
-      }
-    ]
   }
 }
