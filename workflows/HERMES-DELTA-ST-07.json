@@ -1,0 +1,1396 @@
+{
+  "name": "HERMES-DELTA-ST-07",
+  "active": true,
+  "nodes": [
+    {
+      "name": "Prepare System",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst ships = $input.first().json?.data;\n// FIX #1: Only overwrite ships if API returned valid data (not empty/failed)\nif (Array.isArray(ships) && ships.length > 0) {\n  staticData.ships = ships;\n  console.log('PREPARE: stored ' + ships.length + ' ships');\n} else {\n  console.log('PREPARE: no ships data, keeping cached count=' + (staticData.ships||[]).length);\n}\nif (!Array.isArray(ships) || ships.length === 0) { \n  return [{ json: { warning: 'no_ships', cached: (staticData.ships||[]).length } }]; \n}\nreturn [{ json: { system: ships[0].nav.systemSymbol, shipCount: ships.length } }];"
+      },
+      "id": "afb954a5-1dcd-4d17-906e-8c7f2371fe7b"
+    },
+    {
+      "name": "Get System Waypoints",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.spacetraders.io/v2/systems/{{ $json.system }}/waypoints?limit=20&page=1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "continueOnFail": true,
+          "retries": 5,
+          "retryDelay": 5000,
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "id": "2d0cdd96-1f02-49e7-84e7-e04d696a0502",
+      "continueOnFail": true
+    },
+    {
+      "name": "Parse Waypoints",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        400
+      ],
+      "parameters": {
+        "jsCode": "// Parse Waypoints — find and cache key waypoints in staticData\nconst wpData = $input.first().json;\nconst waypoints = wpData.data || [];\nlet MINE_WP = null;\nlet SELL_WP = null;\nlet FUEL_WP = null;\nfor (const wp of waypoints) {\n  const type = wp.type || '';\n  if (type === 'ENGINEERED_ASTEROID' && !MINE_WP) { MINE_WP = wp.symbol; }\n  if (type === 'ASTEROID_BASE' && !SELL_WP) { SELL_WP = wp.symbol; }\n  if (type === 'FUEL_STATION' && !FUEL_WP) { FUEL_WP = wp.symbol; }\n}\n// Fallback: use first asteroid if no engineered one found\nif (!MINE_WP) {\n  const firstAsteroid = waypoints.find(w => w.type === 'ASTEROID');\n  if (firstAsteroid) MINE_WP = firstAsteroid.symbol;\n}\nconst sd = $getWorkflowStaticData('global');\nsd.wp = { MINE: MINE_WP, SELL: SELL_WP, FUEL: FUEL_WP, ts: Date.now() };\nreturn [{ json: { MINE_WP, SELL_WP, FUEL_WP, wpCount: waypoints.length } }];"
+      },
+      "id": "04264dde-1d52-43de-8fa8-ed6beb9e095a"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        },
+        "options": {
+          "retryOnFail": true
+        }
+      },
+      "id": "d2d29210",
+      "name": "Every 60s +30s",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/ships",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000,
+          "timeout": 30000
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": false,
+        "continueOnFail": true
+      },
+      "id": "17390ddc",
+      "name": "Get Ships",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.spacetraders.io/v2/my/contracts",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000,
+          "timeout": 30000
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "alwaysOutputData": true,
+        "continueOnFail": true
+      },
+      "id": "836ce5b1",
+      "name": "Get Contracts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        400
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst MINE_WP  = 'X1-PT68-ZB5A';\nconst FUEL_WP  = 'X1-PT68-B6';\nconst MIN_FUEL = 280;\n\n// Get contracts from single input (Get Contracts)\nconst contracts = $input.first().json?.data || [];\nconst arr = Array.isArray(contracts) ? contracts : [contracts];\nconst activeC = arr.find(c => c.accepted && !c.fulfilled) || null;\nconst tradeSym = activeC?.terms?.deliver?.[0]?.tradeSymbol;\nconst deliverDest = activeC?.terms?.deliver?.[0]?.destinationSymbol;\nif (!deliverDest) { return [{json:{action:'idle',reason:'no_dest'} }]; }\n\n// FIX #4: Debug logging\nconst _shipCount = (staticData.ships||[]).length;\nconst _surveyAge = staticData.survey ? Math.round((Date.now() - new Date(staticData.survey.expiration).getTime())/1000) : 'none';\nconsole.log('MC: ships=' + _shipCount + ' trade=' + tradeSym + ' deliver=' + deliverDest + ' surveyAge=' + _surveyAge);\n\nfunction getRole(s) { const f=s.frame?.symbol||''; if(f.includes('PROBE')||f.includes('SATELLITE'))return null; if(f.includes('FRIGATE'))return 'hauler'; if((s.mounts||[]).some(m=>m.symbol?.includes('MINING_LASER')))return 'miner'; return null; }\nconst ships=staticData.ships||[]; const actions=[];\nfor(const ship of ships){\n  if(!getRole(ship))continue;\n  const nav=ship.nav, status=nav.status, wp=nav.waypointSymbol, fuel=ship.fuel, cargo=ship.cargo;\n  const cargoPct=cargo.capacity>0?cargo.units/cargo.capacity:0, sym=ship.symbol, fm=nav.flightMode||'CRUISE';\n  if(status==='IN_TRANSIT'){if(fm==='DRIFT'){actions.push({action:'set_cruise',ship:sym});}continue;}\n  if(new Date(ship.cooldown?.expiration||0).getTime()>Date.now())continue;\n  const tu=(cargo.inventory||[]).filter(i=>i.symbol===tradeSym).reduce((s,i)=>s+i.units,0);\n  const junk=(cargo.inventory||[]).filter(i=>i.symbol!==tradeSym&&i.units>0);\n  \n  // At deliver destination with trade ore -> dock and deliver\n  if(wp===deliverDest&&tu>0){if(status==='DOCKED'){actions.push({action:'deliver',ship:sym,tradeSymbol:tradeSym,units:tu,contractId:activeC?.id});continue;}if(status==='IN_ORBIT'){actions.push({action:'dock',ship:sym});continue;}}\n  // At deliver destination without trade ore -> return to mine\n  if(wp===deliverDest&&tu===0){if(status==='DOCKED'){actions.push({action:'orbit',ship:sym});continue;}if(status==='IN_ORBIT'){if(fm!=='CRUISE'){actions.push({action:'set_cruise',ship:sym});continue;}actions.push({action:'navigate',ship:sym,waypoint:MINE_WP,reason:'return_to_mine',flightMode:'CRUISE'});continue;}}\n  // Fuel stop\n  if(wp===FUEL_WP&&fuel.current<fuel.capacity-5){if(status==='DOCKED'){actions.push({action:'refuel',ship:sym});continue;}if(status==='IN_ORBIT'){actions.push({action:'dock',ship:sym});continue;}}\n  \n  // Have trade ore somewhere -> navigate to deliver\n  if(tu>0&&wp!==deliverDest){if(fuel.current<MIN_FUEL&&status==='IN_ORBIT'&&wp!==FUEL_WP){if(fm!=='DRIFT'){actions.push({action:'set_drift',ship:sym});continue;}}if(status==='IN_ORBIT'){if(fm!=='CRUISE'){actions.push({action:'set_cruise',ship:sym});continue;}actions.push({action:'navigate',ship:sym,waypoint:deliverDest,reason:'deliver',flightMode:'CRUISE'});continue;}if(status==='DOCKED'){actions.push({action:'orbit',ship:sym});continue;}}\n  \n  // FIX #2: Jettison junk at 10% (was 30%)\n  if(junk.length>0&&cargoPct>=0.10){console.log('JETTISON: '+sym+' junk='+junk.length+' types pct='+cargoPct.toFixed(2));for(const j of junk)actions.push({action:'jettison',ship:sym,symbol:j.symbol,units:j.units});continue;}\n  \n  // FIX: At mine WP with low fuel -> divert to fuel station\n  if(wp===MINE_WP&&fuel.current<MIN_FUEL&&status==='IN_ORBIT'){if(fm!=='DRIFT'){actions.push({action:'set_drift',ship:sym});continue;}actions.push({action:'navigate',ship:sym,waypoint:FUEL_WP,reason:'low_fuel_at_mine',flightMode:'DRIFT'});continue;}\n  // FIX: At mine WP with junk cargo -> jettison before mining\n  if(wp===MINE_WP&&junk.length>0&&cargoPct>=0.10){for(const j of junk)actions.push({action:'jettison',ship:sym,symbol:j.symbol,units:j.units});continue;}\n\n  // Navigate to mine\n  if(wp!==MINE_WP){if(fuel.current<MIN_FUEL&&status==='IN_ORBIT'&&wp!==FUEL_WP){if(fm!=='DRIFT'){actions.push({action:'set_drift',ship:sym});continue;}}if(status==='IN_ORBIT'){if(fm!=='CRUISE'){actions.push({action:'set_cruise',ship:sym});continue;}actions.push({action:'navigate',ship:sym,waypoint:MINE_WP,reason:'mine',flightMode:'CRUISE'});continue;}if(status==='DOCKED'){actions.push({action:'orbit',ship:sym});continue;}}\n  \n  // FIX #3: At mine -> always survey first, never mine without valid survey\n  if(wp===MINE_WP){if(status==='DOCKED'){actions.push({action:'orbit',ship:sym});continue;}if(status==='IN_ORBIT'){const sv=staticData.survey;const v=sv&&new Date(sv.expiration).getTime()>Date.now();if(!v){console.log('SURVEY: '+sym+' creating new survey');actions.push({action:'survey',ship:sym});continue;}actions.push({action:'mine_survey',ship:sym,survey:sv});console.log('MINE_SURVEY: '+sym+' using survey expires='+sv.expiration);continue;}}\n}\nconsole.log('MC: actions='+actions.length);\nreturn actions.length>0?actions.map(a=>({json:a})):[{json:{action:'idle',reason:'no_actions'}}];"
+      },
+      "name": "Mission Control",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        550,
+        300
+      ],
+      "id": "1967b5ba-e0e1-4a16-ba21-8012d2bd5ea9"
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "daf259dc",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "accept_contract",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "d3e594f2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "orbit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "5a31db04",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "navigate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "d9e599f9",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "mine",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "9c38b1f2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "dock",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e8ccd8c2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "deliver",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "f9e2ba61",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "refuel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "649ade90-485f-46f6-87fe-0a06322706d7",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "jettison",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "fe6a5f4d-99d6-450c-9ed5-d9f6dbd30741",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "survey",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "36fbc16b-c5b0-4289-9f45-cb894e12eb15",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "mine_survey",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "054adec3-ad8f-4197-8eb3-d427f471eda7",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "set_drift",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "2dc47a54-37fe-4407-a536-9067060b51e1",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "set_cruise",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "siphon-rule",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "siphon",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "a1b2c3d4",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "sell_market",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "fulfill-RtRwyn",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "fulfill_contract",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      },
+      "id": "788a159a",
+      "name": "Action Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/accept",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "82b1f515",
+      "name": "Accept Contract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        60
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/orbit",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "0e856654",
+      "name": "Orbit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/navigate",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000,
+          "continueOnFail": true
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"waypointSymbol\":\"{{ $json.waypoint }}\",\"flightMode\":\"{{ $json.flightMode || 'CRUISE' }}\"}"
+      },
+      "id": "9093c5ef",
+      "name": "Navigate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        260
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/extract",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "c3fb3d00",
+      "name": "Mine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/dock",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "dc0d1c47",
+      "name": "Dock",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{$json.contractId}}/deliver",
+        "options": {
+          "retries": 0,
+          "retryDelay": 5000,
+          "continueOnFail": true
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"shipSymbol\":\"{{ $json.ship }}\",\"tradeSymbol\":\"{{ $json.tradeSymbol }}\",\"units\":{{ $json.units }}}"
+      },
+      "id": "2e1e413a",
+      "name": "Deliver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        560
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{$json.ship}}/refuel",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true,
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      },
+      "id": "343243c8",
+      "name": "Refuel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        660
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "id": "3ce0c0b5",
+      "name": "Wait/Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "options": {
+          "continueOnFail": true
+        },
+        "specifyBody": "json",
+        "jsonBody": "{\"title\":\"Contract accepted!\",\"message\":\"Mining loop started for HERMES-FLEET2\",\"severity\":\"info\"}"
+      },
+      "id": "ee8f9fbf",
+      "name": "Notify Accept",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        60
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/spaceship-notify",
+        "sendBody": true,
+        "options": {
+          "continueOnFail": true
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\"title\":\"Delivery!\",\"message\":\"{{ $json.units }} x {{ $json.tradeSymbol }} delivered\",\"severity\":\"info\"}"
+      },
+      "id": "1d4916ae",
+      "name": "Notify Deliver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        560
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "name": "Jettison",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/jettison",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "position": [
+        1460,
+        720
+      ],
+      "id": "304422d5-530e-4a73-bb94-a7f42001ca22",
+      "continueOnFail": true
+    },
+    {
+      "name": "Survey",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/survey",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "position": [
+        1460,
+        840
+      ],
+      "id": "8311dada-5734-45ff-9b12-d2d040e1c9d2",
+      "continueOnFail": true
+    },
+    {
+      "name": "Store Survey",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst result = $input.first().json;\nconst surveys = result.data?.surveys || [];\n// Pick survey with most ore deposits (any type)\nlet best = null;\nlet bestScore = -1;\nfor (const s of surveys) {\n  const score = (s.deposits || []).filter(d => \n    !d.symbol.includes('CRYSTALS') && !d.symbol.includes('SAND') && !d.symbol.includes('ICE')\n  ).length;\n  if (score > bestScore) { bestScore = score; best = s; }\n}\nif (!best && surveys.length > 0) best = surveys[0];\nif (best) { staticData.survey = best; return [{json:{stored:true, deposits: best.deposits?.map(d=>d.symbol)}}]; }\nreturn [{json:{stored:false}}];"
+      },
+      "position": [
+        1680,
+        840
+      ],
+      "id": "0b91d500-7b7f-4fb0-98ac-6d0865a8d2dc"
+    },
+    {
+      "name": "Mine Survey",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/extract/survey",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.survey) }}",
+        "options": {
+          "retries": 0
+        },
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "position": [
+        1460,
+        960
+      ],
+      "id": "4092d874-19d7-4026-86af-d44c6d9a76ea",
+      "continueOnFail": true
+    },
+    {
+      "name": "Set Drift",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/nav",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"flightMode\":\"DRIFT\"}",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "position": [
+        1460,
+        840
+      ],
+      "id": "e01a1f65-6c0d-4ee4-ac34-b7d063579ddb",
+      "continueOnFail": true
+    },
+    {
+      "name": "Set Cruise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/nav",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"flightMode\":\"CRUISE\"}",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "position": [
+        1460,
+        960
+      ],
+      "id": "88f9a5e3-5eb3-45ce-b5f3-a4e514f6c397",
+      "continueOnFail": true
+    },
+    {
+      "name": "Siphon",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        860
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/siphon",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "alwaysOutputData": true,
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "id": "4ad4561b-12a1-46ab-8b1e-2f85ee7724d4",
+      "continueOnFail": true
+    },
+    {
+      "id": "sell-market-node-001",
+      "name": "Sell Market",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        700
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/ships/{{ $json.ship }}/sell",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"symbol\":\"{{ $json.symbol }}\",\"units\":{{ $json.units }}}",
+        "options": {
+          "retries": 5,
+          "retryDelay": 5000
+        },
+        "continueOnFail": true
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "fulfill-RtRwyntV",
+      "name": "Fulfill Contract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        200
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.spacetraders.io/v2/my/contracts/{{ $json.contractId }}/fulfill",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": false
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kcFjd77vsGZQcfs8",
+          "name": "HERMES-DELTA Auth"
+        }
+      }
+    },
+    {
+      "id": "deliver-guard-RtRwyntV",
+      "name": "Deliver Guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst input = $input.first().json;\nif (!staticData.deliverFails) staticData.deliverFails = {};\nconst ship = input.ship;\nconst now = Date.now();\nconst lastFail = staticData.deliverFails[ship];\nif (lastFail && (now - lastFail) < 5 * 60 * 1000) {\n  return [{json: {action: 'deliver_skipped', ship, reason: 'fail_cooldown'}}];\n}\nif (!input.contractId || !input.tradeSymbol || !input.units || input.units <= 0) {\n  staticData.deliverFails[ship] = now;\n  return [{json: {action: 'deliver_skipped', ship, reason: 'invalid_params'}}];\n}\nreturn [$input.first()];"
+      }
+    }
+  ],
+  "connections": {
+    "Get Ships": {
+      "main": [
+        [
+          {
+            "node": "Prepare System",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare System": {
+      "main": [
+        [
+          {
+            "node": "Get System Waypoints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get System Waypoints": {
+      "main": [
+        [
+          {
+            "node": "Parse Waypoints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Waypoints": {
+      "main": [
+        []
+      ]
+    },
+    "Get Contracts": {
+      "main": [
+        [
+          {
+            "node": "Mission Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mission Control": {
+      "main": [
+        [
+          {
+            "node": "Action Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action Switch": {
+      "main": [
+        [
+          {
+            "node": "Accept Contract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Orbit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Navigate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deliver Guard",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Jettison",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Survey",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mine Survey",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Drift",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Cruise",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Siphon",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sell Market",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "Accept Contract": {
+      "main": [
+        [
+          {
+            "node": "Notify Accept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Survey": {
+      "main": [
+        [
+          {
+            "node": "Store Survey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fulfill Contract": {
+      "main": [
+        [
+          {
+            "node": "Notify Accept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver Guard": {
+      "main": [
+        [
+          {
+            "node": "Deliver",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Deliver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 60s +30s": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Cruise": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Drift": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orbit": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dock": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refuel": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jettison": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mine": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mine Survey": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siphon": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Navigate": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sell Market": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait/Skip": {
+      "main": [
+        [
+          {
+            "node": "Get Ships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "UBBtoeMsOM2deZTM"
+  }
+}
